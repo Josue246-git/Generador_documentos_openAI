@@ -6,18 +6,27 @@ export default function LoginComponent() {
 
   const handleLogin = async (event) => {
     event.preventDefault();
-    // Lógica para enviar al backend
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-    
-    const data = await response.json();
-    console.log(data); // Manejar la respuesta del servidor
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+  
+      const data = await response.json();
+      if (data.success) {
+        console.log('Login exitoso');
+        // Puedes redirigir o mostrar algún mensaje en caso de éxito
+      } else {
+        console.log('Error: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error en el login:', error);
+    }
   };
+  
 
   return (
     <form onSubmit={handleLogin}>
