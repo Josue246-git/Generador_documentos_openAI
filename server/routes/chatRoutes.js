@@ -94,38 +94,4 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-// // Ruta para el login
-// router.post('/login', (req, res) => {
-//   const { username, password } = req.body;
-
-//   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-//     req.session.loggedIn = true; // Establece la sesión como autenticada
-//     return res.json({ success: true, message: 'Login exitoso' });
-//   } else {
-//     return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-//   }
-// });
-
-// // Ruta para cerrar sesión
-// router.post('/logout', (req, res) => {
-//   req.session.destroy((err) => {
-//     if (err) {
-//       return res.status(500).json({ success: false, message: 'Error al cerrar sesión' });
-//     } else {
-//       return res.json({ success: true, message: 'Sesión cerrada' });
-//     }
-//   });
-// });
-
-// // charRoutes.js
-
-// router.get('/checkAuth', (req, res) => {
-//   if (req.session.loggedIn) {
-//     res.sendStatus(200);
-//   } else {
-//     res.sendStatus(401);
-//   }
-// });
-
-
 export default router;
