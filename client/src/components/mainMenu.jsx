@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function MainMenu() {
   // Lista de tipos de documentos disponibles
@@ -13,24 +14,36 @@ export default function MainMenu() {
 
   // Estado para la búsqueda de documentos
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  // Obtener el rol desde localStorage
+  const rol = localStorage.getItem('rol');
 
   // Filtrar documentos según el término de búsqueda
   const filteredDocuments = documents.filter((doc) =>
     doc.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+    // Función para redirigir a la interfaz de administrador
+    const handleAdminClick = () => {
+      navigate('/admin');
+    };
+  
+
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      {/* Barra de navegación */}
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Menú Principal</h1>
         <div className="flex space-x-4">
-          <button className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-500 focus:outline-none">
-            Iniciar Sesión
-          </button>
-          <button className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-sm hover:bg-gray-500 focus:outline-none">
-            Cerrar Sesión
-          </button>
+          {/* Si el usuario es admin, mostrar el botón para ir a la interfaz de administrador */}
+          {rol === 'admin' && (
+            <button
+              onClick={handleAdminClick}
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-500 focus:outline-none"
+            >
+              + Nuevo Docuemento 
+            </button>
+          )}
         </div>
       </header>
 

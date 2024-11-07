@@ -1,37 +1,49 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
 export default function DocumentGenerator() {
-  const [objetoContratacion, setObjetoContratacion] = useState('');
+  const [objDoc, setobjDoc] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [points, setPoints] = useState([]); // Cada punto será un contenedor con su historial de versiones
+  const [points, setPoints] = useState([]);
 
   // Generar informe y crear puntos iniciales
   const handleGenerateReport = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulación de llamada a la API y creación de puntos
-    setTimeout(() => {
-      const generatedPoints = [
-        { id: 1, versions: ["Punto 1 generado automáticamente"] },
-        { id: 2, versions: ["Punto 2 generado automáticamente"] },
-        { id: 3, versions: ["Punto 3 generado automáticamente"] },
-      ];
-      setPoints(generatedPoints);
+    try {
+      // Realizar la solicitud POST al backend
+      const response = await axios.post('/api/generate', { objDoc });
+      const generatedPoints = response.data.points;
+      setPoints(generatedPoints); // Asumimos que el backend devuelve los puntos generados
+    } catch (error) {
+      console.error('Error generating report:', error);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   // Añadir una nueva versión a un punto específico
-  const handleCorrectionSubmit = (index, correction) => {
-    const updatedPoints = points.map((point, i) => {
-      if (i === index) {
-        return { ...point, versions: [...point.versions, correction] };
-      }
-      return point;
-    });
-    setPoints(updatedPoints);
+  const handleCorrectionSubmit = async (index, correction) => {
+    try {
+      // Realizar la solicitud POST al backend para la corrección
+      const response = await axios.post('/api/correct', { 
+        pointId: points[index].id, 
+        correction 
+      });
+      
+      // Actualizar la lista de puntos con la nueva versión
+      const updatedPoints = points.map((point, i) => {
+        if (i === index) {
+          return { ...point, versions: [...point.versions, response.data.newVersion] };
+        }
+        return point;
+      });
+      setPoints(updatedPoints);
+    } catch (error) {
+      console.error('Error submitting correction:', error);
+    }
   };
 
   return (
@@ -47,8 +59,8 @@ export default function DocumentGenerator() {
           className="w-full p-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           rows="5"
           placeholder="Ingrese el objeto de contratación considerando el Art. 48 del nuevo Reglamento"
-          value={objetoContratacion}
-          onChange={(e) => setObjetoContratacion(e.target.value)}
+          value={objDoc}
+          onChange={(e) => setobjDoc(e.target.value)}
           required
         />
         <button

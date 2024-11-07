@@ -13,12 +13,14 @@ export default function AdminInterface() {
     setSections([...sections, { content: '' }]);
   };
 
-  const handleSectionChange = (id, newContent) => {
+  const handleSectionChange = (index, newContent) => {
     setSections(
-      sections.map((section) => (section.id === id ? { ...section, content: newContent } : section))
+      sections.map((section, i) =>
+        i === index ? { ...section, content: newContent } : section
+      )
     );
   };
-
+  
   const handleRemoveSection = (index) => {
     setSections(sections.filter((_, i) => i !== index));
   };
@@ -40,7 +42,10 @@ export default function AdminInterface() {
     <div className="p-10 pr-20 pl-20 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-4">Generador de Documentos Administrativos</h1>
       <p className="mb-8 text-lg text-gray-700">¡Bienvenido! Personaliza los datos para generar informes y documentos específicos.</p>
-      
+      {/* instrucciones */}
+
+
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-2">Título o Tipo de Documento</label>
@@ -60,16 +65,16 @@ export default function AdminInterface() {
             <span className="ml-2 text-gray-500 cursor-pointer relative group">
               <span className="text-xl">?</span>
               <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-64 bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
-                Escribe el objeto o punto el cual el sistema se basará para generar el documento, ejem: "Objeto de contratacion"
+                Escribe el objeto el tema el cual el sistema se basará para generar el documento, ejem: "Objeto de contratacion"
               </div> 
             </span>
           </label>
-          <textarea
+          <textarea 
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)} 
             className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             rows="4"
-            placeholder="Escribe el objeto o punto el cual el sistema se basará para generar el documento"
+            placeholder="Escribe el objeto o el tema el cual el sistema se basará para generar el documento"
             required
           />
         </div> 
@@ -152,7 +157,7 @@ export default function AdminInterface() {
               />
             </div>
           </div>
-        </div>
+        </div> 
 
         <div className="mt-8">
           <button

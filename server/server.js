@@ -1,22 +1,48 @@
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url'; // Importa fileURLToPath
-import routes from './routes/chatRoutes.js';
+import cors from 'cors';
+// import routes from './routes/chatRoutes.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+import { validarUsuario } from './db/sentencias_sql.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(cors());
+app.use(express.json());
 
-// Obtiene el directorio del archivo actual
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Middleware de autenticación
+const authMiddleware = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Acceso denegado' });
 
-// Rutas
-app.use('/api', routes);
+  try {
+    const decoded = jwt.verify(token, 'secret_key');
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Token inválido' });
+  }
+};
+// Ruta de login
+app.post('/api/login', async (req, res) => {
+  const { cedula, password } = req.body;
 
+  try {
+    const rol = await validarUsuario(cedula, password);
+
+    if (rol) {
+      res.json({ rol });
+    } else {
+      res.status(401).json({ message: 'Cédula o contraseña incorrecta' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
 
 
 // Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
- 
