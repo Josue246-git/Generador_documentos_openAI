@@ -13,3 +13,48 @@ export async function validarUsuario(cedula, password) {
     throw error;
   }
 }
+
+
+// const insertarDocumento = async (titulo, prompt_user, contexto_base, puntos) => {
+export async function insertarDocumento(titulo, descripcion, prompt_user, contexto_base, puntos) {
+  const query = `
+    INSERT INTO estr_documentos (titulo, descripcion, prompt_user, contexto_base, puntos)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id
+  `;
+  const values = [titulo, descripcion, prompt_user, contexto_base, puntos];
+  const result = await pool.query(query, values);
+  return result.rows[0].id;
+};
+
+export async function obtenerDocumentos() {
+  try {
+    const query = `
+      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos, fecha_creacion
+      FROM estr_documentos
+      ORDER BY fecha_creacion DESC
+    `; 
+    const result = await pool.query(query);
+    return result.rows;
+  } catch (error) {
+    console.error('Error al obtener documentos:', error);
+    throw error;
+  }
+} 
+
+
+export async function obtenerDocumentoPorId(documentoId) {
+  try {
+    const query = `
+      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos, fecha_creacion
+      FROM estr_documentos
+      WHERE id = $1
+    `;
+    const result = await pool.query(query, [documentoId]);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error al obtener el documento por ID:', error);
+    throw error;
+  }
+}
+

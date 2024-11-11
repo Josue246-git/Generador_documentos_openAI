@@ -4,16 +4,98 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../db/conexion_db.js';
-import { login } from '../db/sentencias_sql.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { insertarDocumento, obtenerDocumentos, obtenerDocumentoPorId } from '../db/sentencias_sql.js';
 
 dotenv.config();
 
-
-const router = express.Router();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // Asegúrate de que tu API Key esté en las variables de entorno
 });
+
+
+export const generarEstDocumento = async (req, res) => {
+  const { title, descripcion, userPrompt, context, sections } = req.body;
+
+  console.log( title, userPrompt, context, sections)
+  try {
+    // Almacenar los datos en la base de datos
+    const documentId = await insertarDocumento(title, descripcion, userPrompt, context, sections);
+
+    // Devolver confirmación de éxito al cliente
+    res.status(200).json({
+      success: true,
+      message: 'Documento almacenado exitosamente en la base de datos',
+      documentId,
+    });
+  } catch (error) {
+    console.error('Error al almacenar el documento:', error);
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
+};
+
+
+
+
+// En el controlador `documentController.js`
+export const obtenerDocumentosCon = async (req, res) => { 
+  try {
+    const documentos = await obtenerDocumentos();
+
+
+    res.status(200).json({ success: true, documentos });
+  } catch (error) {
+    console.error('Error al obtener documentos:', error);
+    res.status(500).json({ success: false, error: 'Error al obtener documentos' });
+  }
+};
+
+
+export const generarDocumento = async (req, res) => {
+  try {
+    // Obtener el tipo de documento e ID del documento desde el body o query params
+    const { documentoId, objDoc } = req.body;
+
+    // Obtener el documento de la base de datos según el ID
+    const documento = await obtenerDocumentoPorId(documentoId);
+    
+    if (!documento) {
+      return res.status(404).json({ success: false, message: 'Documento no encontrado' });
+    }
+
+    // Extraer los datos necesarios del documento
+    const { titulo, prompt_user, contexto_base, puntos } = documento;
+
+    // Configurar el mensaje de contexto y el prompt del usuario
+    const contextMessage = {
+      role: 'system',
+      content: contexto_base + puntos
+    };
+
+    const userPrompt = `${prompt_user} ${objDoc}`;
+
+    // Realizar la solicitud a OpenAI
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        contextMessage,
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: 2000,
+      temperature: 0.2
+    });
+
+    // Obtener la respuesta de OpenAI
+    const respuesta = response.choices[0].message.content;
+    console.log('Respuesta:', respuesta);
+    res.json({ success: true, response: respuesta });
+  } catch (error) {
+    console.error('Error al generar el informe:', error);
+    res.status(500).json({ success: false, message: 'Error al generar el informe' });
+  }
+};
+
+
 
 //Generar informes generalizados
 // router.post('/generate', async (req, res) => {
@@ -102,37 +184,3 @@ const openai = new OpenAI({
 
 
 // Ruta de autenticación
-router.post('/login', async (req, res) => {
-  const { cedula, password } = req.body;
-
-  try {
-      const user = await login(cedula, password); // tu función login en sentencias_sql.js
-
-      if (!user) {
-          return res.status(401).json({ message: 'Cédula o contraseña incorrecta' });
-      }
-
-      // Generar el token y enviarlo junto con el rol
-      const token = jwt.sign({ id: user.id, rol: user.rol }, 'secret_key', { expiresIn: '1h' });
-      res.json({ token, rol: user.rol });
-      
-  } catch (error) {
-      res.status(500).json({ message: 'Error en el servidor' });
-  }
-});
-
-
-// Rutas protegidas
-router.get('/admin', authMiddleware, (req, res) => {
-  if (req.user.rol !== 'admin') {
-    return res.status(403).json({ message: 'Acceso denegado' });
-  }
-
-  res.json({ message: 'Acceso permitido a la interfaz de administración' });
-});
-
-router.get('/generate', authMiddleware, (req, res) => {
-  res.json({ message: 'Acceso permitido al generador de documentos' });
-});
-
-export default router;

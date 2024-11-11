@@ -4,7 +4,8 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import { validarUsuario } from './db/sentencias_sql.js';
+import { validarUsuario, insertarDocumento } from './db/sentencias_sql.js';
+import docEstRouter from './routes/doc_routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,11 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
+
+
+
+
+app.use(docEstRouter);
 
 
 // Iniciar el servidor

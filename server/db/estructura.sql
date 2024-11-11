@@ -18,17 +18,16 @@ insert into users (cedula, password, rol) values ('1234567891', '123456', 'user'
 
 select * from users
 
-CREATE TABLE docs (
-    id SERIAL PRIMARY KEY,
-    titulo VARCHAR(255) NOT NULL,
-    inputUser TEXT NOT NULL,
-    contexto_sistema TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    
+
+
+CREATE TABLE estr_documentos (
+  id SERIAL PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  prompt_user TEXT NOT NULL,
+  contexto_base TEXT NOT NULL,
+  puntos TEXT[] NOT NULL,
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
-
-
-
-
+select	* from estr_documentos
