@@ -81,55 +81,112 @@ export default function DocumentGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [points, setPoints] = useState([]);
   const [userInputs, setUserInputs] = useState({});
+  // const [requestCount, setRequestCount] = useState({});
+  const [correctionHistory, setCorrectionHistory] = useState({}); // Nuevo estado para manejar el historial de correcciones
+
 
 // Función para procesar el JSON
 // Función para procesar el JSON y detectar tablas
+  // function processJSONData(data) {
+  // if (!data || typeof data !== 'object') {
+  //   console.error("Error: la estructura de datos no es válida.");
+  //   return [];
+  // }
+
+  // const points = [];
+
+  // Object.keys(data).forEach((key) => {
+  //   const value = data[key];
+
+  //   if (Array.isArray(value)) {
+  //     value.forEach((section) => {
+  //       const id = section.id || "Sin ID";
+  //       const title = section.title || "Sin título";
+  //       const content = section.content || "Sin contenido";
+
+  //       // Detecta si `content` es un array de objetos (posible tabla)
+  //       let isTable = false;
+  //       let tableHeaders = [];
+  //       let tableRows = [];
+
+  //       if (Array.isArray(content) && content.every(item => typeof item === 'object')) {
+  //         isTable = true;
+  //         // Obtén los encabezados de la tabla (las claves del primer objeto)
+  //         tableHeaders = Object.keys(content[0]);
+  //         // Obtén las filas de la tabla
+  //         tableRows = content.map(row => Object.values(row));
+  //       }
+
+  //       points.push({
+  //         id,
+  //         title,
+  //         content: isTable ? { type: "table", headers: tableHeaders, rows: tableRows } : content,
+  //       });
+  //     });
+  //   }
+  // });
+
+  // if (points.length === 0) {
+  //   console.error("Error: no se encontraron arrays en los datos.");
+  //   return [];
+  // }
+
+  // return points;
+  // }
+
   function processJSONData(data) {
-  if (!data || typeof data !== 'object') {
-    console.error("Error: la estructura de datos no es válida.");
-    return [];
-  }
-
-  const points = [];
-
-  Object.keys(data).forEach((key) => {
-    const value = data[key];
-
-    if (Array.isArray(value)) {
-      value.forEach((section) => {
-        const id = section.id || "Sin ID";
-        const title = section.title || "Sin título";
-        const content = section.content || "Sin contenido";
-
-        // Detecta si `content` es un array de objetos (posible tabla)
-        let isTable = false;
-        let tableHeaders = [];
-        let tableRows = [];
-
-        if (Array.isArray(content) && content.every(item => typeof item === 'object')) {
-          isTable = true;
-          // Obtén los encabezados de la tabla (las claves del primer objeto)
-          tableHeaders = Object.keys(content[0]);
-          // Obtén las filas de la tabla
-          tableRows = content.map(row => Object.values(row));
-        }
-
-        points.push({
-          id,
-          title,
-          content: isTable ? { type: "table", headers: tableHeaders, rows: tableRows } : content,
-        });
-      });
+    // Asegurarse de que los datos son un objeto
+    if (!data || typeof data !== 'object') {
+      console.error("Error: la estructura de datos no es válida.");
+      return [];
     }
-  });
-
-  if (points.length === 0) {
-    console.error("Error: no se encontraron arrays en los datos.");
-    return [];
+  
+    const points = [];
+  
+    Object.keys(data).forEach((key) => {
+      const value = data[key];
+  
+      if (Array.isArray(value)) {
+        value.forEach((section) => {
+          const id = section.id || "Sin ID";
+          const title = section.title || "Sin título";
+          const content = section.content || "Sin contenido";
+  
+          // Detectar si `content` es un array de objetos (posible tabla)
+          let isTable = false;
+          let tableHeaders = [];
+          let tableRows = [];
+  
+          if (Array.isArray(content) && content.every(item => typeof item === 'object')) {
+            isTable = true;
+            // Obtener los encabezados de la tabla (las claves del primer objeto)
+            tableHeaders = Object.keys(content[0]);
+            // Obtener las filas de la tabla
+            tableRows = content.map(row => Object.values(row));
+          } 
+          // Caso de array de cadenas
+          else if (Array.isArray(content) && content.every(item => typeof item === 'string')) {
+            // Aquí puedes procesar el array de cadenas si es necesario
+          }
+  
+          points.push({
+            id,
+            title,
+            content: isTable ? { type: "table", headers: tableHeaders, rows: tableRows } : content,
+          });
+        });
+      }
+    });
+  
+    // Si no se encuentran puntos, loguear el error
+    if (points.length === 0) {
+      console.error("Error: no se encontraron arrays en los datos.");
+      return [];
+    }
+  
+    return points;
   }
-
-  return points;
-  }
+  
 
   const handleChangeContent = (index, newContent) => {
     setPoints((prevPoints) =>
@@ -143,7 +200,6 @@ export default function DocumentGenerator() {
     const userRequest = userInputs[index];
     if (!userRequest) return;
   
-
     const requestData = {documentoId: document.id, titulo: points[index].title, contenido: points[index].content, solicitud: userRequest};
   
     try {
@@ -155,10 +211,25 @@ export default function DocumentGenerator() {
   
       const data = await response.json();
       console.log('cambio:', data);
-  
+
+
       if (data.success) {
-        handleChangeContent(index, data.correctedContent); // Actualizar el contenido con la respuesta
-        setUserInputs((prev) => ({ ...prev, [index]: '' })); // Limpiar el campo de entrada
+        // Actualizar el contenido con la respuesta
+        const newPoints = [...points];
+        newPoints[index].content = data.correctedContent;
+        setPoints(newPoints);
+
+        // Guardar el historial de correcciones
+        setCorrectionHistory((prevHistory) => {
+          const pointHistory = prevHistory[index] || [];
+          return {
+            ...prevHistory,
+            [index]: [...pointHistory, data.correctedContent]
+          };
+        });
+
+        // Limpiar el campo de entrada
+        setUserInputs((prev) => ({ ...prev, [index]: '' }));
       } else {
         console.error("Error en la respuesta:", data.message);
       }
@@ -191,19 +262,21 @@ export default function DocumentGenerator() {
     const requestData = { documentoId: documentId, objDoc };
 
     try {
-      // const response = await fetch('http://localhost:3000/api/generateDoc', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(requestData),
-      // });
-      // const data = await response.json(); 
+      const response = await fetch('http://localhost:3000/api/generateDoc', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+      const data = await response.json(); 
 
-      // console.log('data sin procesar:', data);
-      //const processedPoints = processJSONData(data);
+      console.log('data sin procesar:', data);
 
-      const processedPoints = processJSONData(simalaData);
+      // const jsonData = JSON.parse(data); // Convertir la respuesta a JSON
+      const processedPoints = processJSONData(data);
+
+      // const processedPoints = processJSONData(simalaData);
       console.log('processedPoints:', processedPoints);
       setPoints(processedPoints);
     } 
@@ -338,20 +411,34 @@ export default function DocumentGenerator() {
               )
             }
 
-            {/* Input para la solicitud de cambio */}
-              <textarea
-                value={userInputs[pointIndex] || ''}
-                onChange={(e) => handleUserInputChange(pointIndex, e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Escriba su solicitud de cambio aquí..."
-                rows="3"
-              />
-              <button
-                onClick={() => handleRequestChange(pointIndex)}
-                className="py-1 px-3 bg-blue-500 text-white rounded-md mt-2"
-              >
-                Enviar cambio a la IA
-              </button>
+           {/* Aquí empieza el historial de correcciones */}
+            {correctionHistory[pointIndex] && correctionHistory[pointIndex].map((versionContent, versionIndex) => (
+              <div key={versionIndex} className="space-y-4">
+                <h3 className="text-md font-semibold">Versión {versionIndex + 2}</h3>
+                <textarea
+                  value={versionContent}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  rows="5"
+                />
+              </div>
+            ))}
+
+            {/* Solicitud de nuevo cambio */}
+            <textarea
+              value={userInputs[pointIndex] || ''}
+              onChange={(e) => handleUserInputChange(pointIndex, e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="Escriba su solicitud de cambio aquí..."
+              rows="3"
+            />
+            <button
+              onClick={() => handleRequestChange(pointIndex)}
+              className="py-1 px-3 bg-blue-500 text-white rounded-md mt-2"
+              disabled={correctionHistory[pointIndex]?.length >= 7} // Deshabilita el botón si hay 7 correcciones
+            >
+              {correctionHistory[pointIndex]?.length >= 7 ? "Máximo de 7 correcciones alcanzado" : "Enviar cambio a la IA"}
+            </button>
 
             </div> 
           ))}
@@ -367,3 +454,4 @@ export default function DocumentGenerator() {
     </div>
   )
 }
+
