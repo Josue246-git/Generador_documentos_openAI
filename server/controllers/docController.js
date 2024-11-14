@@ -35,8 +35,6 @@ export const generarEstDocumento = async (req, res) => {
 };
 
 
-
-
 // En el controlador `documentController.js`
 export const obtenerDocumentosCon = async (req, res) => { 
   try {
@@ -55,6 +53,8 @@ export const generarDocumento = async (req, res) => {
   try {
     // Obtener el tipo de documento e ID del documento desde el body o query params
     const { documentoId, objDoc } = req.body;
+    console.log('documentoId:', documentoId);
+    console.log('objDoc:', objDoc);
 
     // Obtener el documento de la base de datos según el ID
     const documento = await obtenerDocumentoPorId(documentoId);
@@ -65,14 +65,23 @@ export const generarDocumento = async (req, res) => {
 
     // Extraer los datos necesarios del documento
     const { titulo, prompt_user, contexto_base, puntos } = documento;
+    console.log('titulo:', titulo);
 
     // Configurar el mensaje de contexto y el prompt del usuario
     const contextMessage = {
       role: 'system',
-      content: contexto_base + puntos
+      content: `${contexto_base} ${puntos}. Por favor, responde como el siguiente ejemplo de formato JSON : 
+                [
+                  {
+                    "id": "1",
+                    "title": "Antecedentes",
+                    "content": "Descripción del contenido correspondiente al punto."
+                  },
+                  ...
+                ]
+                Genera solo los puntos señalados en el documento`
     };
-
-    const userPrompt = `${prompt_user} ${objDoc}`;
+    const userPrompt = `${prompt_user} ${objDoc}`; 
 
     // Realizar la solicitud a OpenAI
     const response = await openai.chat.completions.create({
@@ -81,15 +90,21 @@ export const generarDocumento = async (req, res) => {
         contextMessage,
         { role: 'user', content: userPrompt }
       ],
-      max_tokens: 2000,
-      temperature: 0.2
+      max_tokens: 3000,
+      temperature: 0.2,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      response_format: {
+        "type": "json_object"
+      },
     });
 
     // Obtener la respuesta de OpenAI
     const respuesta = response.choices[0].message.content;
     console.log('Respuesta:', respuesta);
     res.json({ success: true, response: respuesta });
-  } catch (error) {
+  } 
+  catch (error) {
     console.error('Error al generar el informe:', error);
     res.status(500).json({ success: false, message: 'Error al generar el informe' });
   }
@@ -159,6 +174,55 @@ export const generarDocumento = async (req, res) => {
 //     res.status(500).json({ success: false, message: 'Error al generar el informe' });
 //   }
 // });
+
+
+export const corregirDocumento = async (req, res) => {
+  try {
+    const { documentoId, titulo, contenido, solicitud } = req.body; // Datos recibidos del frontend
+    console.log('documentId:', documentoId);
+    console.log('titulo:', titulo);
+    console.log('contenido:', contenido);
+    console.log('solicitud:', solicitud);
+
+    // Obtener el documento de la base de datos según el ID
+    const documento = await obtenerDocumentoPorId(documentoId);
+    
+    if (!documento) {
+      return res.status(404).json({ success: false, message: 'Documento no encontrado' });
+    }
+
+    // Extraer los datos necesarios del documento
+    const {contexto_base} = documento;
+
+    // Configurar el mensaje de contexto
+    const contextMessage = {
+      role: 'system',
+      content: `En base al contexto base: "${contexto_base}", corrige el punto: "${titulo}":"${contenido}" .`
+    };
+
+    // Realizar la solicitud a OpenAI para procesar la corrección
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        contextMessage,
+        { role: 'user', content: solicitud }
+      ],
+      max_tokens: 500,
+      temperature: 0.2,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    });
+
+    // Obtener la respuesta de OpenAI y procesarla
+    const correctedContent = response.choices[0].message.content;
+
+    // Enviar la respuesta con el contenido corregido
+    res.status(200).json({ success: true, pointId, correctedContent });
+  } catch (error) {
+    console.error("Error al corregir el documento:", error);
+    res.status(500).json({ success: false, message: "Error al procesar el cambio" });
+  }
+};
 
 
 

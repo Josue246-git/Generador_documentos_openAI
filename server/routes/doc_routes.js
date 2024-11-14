@@ -10,4 +10,6 @@ router.get('/api/documentos', obtenerDocumentosCon);
 
 router.post('/api/generateDoc', generarDocumento);
 
+router.post('/api/correct', generarDocumento);
+
 export default router; 
