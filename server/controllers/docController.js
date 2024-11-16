@@ -197,7 +197,7 @@ export const corregirDocumento = async (req, res) => {
     // Configurar el mensaje de contexto
     const contextMessage = {
       role: 'system',
-      content: `En base al contexto base: "${contexto_base}", corrige el punto: "${titulo}":"${contenido}" .`
+      content: `En base al contexto base: "${contexto_base}", corrige solo y unicamente el punto: "${titulo}": "${contenido}" .`
     };
 
     // Realizar la solicitud a OpenAI para procesar la corrección
@@ -207,7 +207,7 @@ export const corregirDocumento = async (req, res) => {
         contextMessage,
         { role: 'user', content: solicitud }
       ],
-      max_tokens: 500,
+      max_tokens: 700,
       temperature: 0.2,
       frequency_penalty: 0,
       presence_penalty: 0,
@@ -217,7 +217,7 @@ export const corregirDocumento = async (req, res) => {
     const correctedContent = response.choices[0].message.content;
 
     // Enviar la respuesta con el contenido corregido
-    res.status(200).json({ success: true, pointId, correctedContent });
+    res.status(200).json({ success: true, correctedContent });
   } catch (error) {
     console.error("Error al corregir el documento:", error);
     res.status(500).json({ success: false, message: "Error al procesar el cambio" });

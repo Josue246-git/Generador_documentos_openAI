@@ -1,138 +1,21 @@
 import React, { useState } from "react";
 import { useLocation } from 'react-router-dom';
-// import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
-
+import { Document, Paragraph, Table, TableRow, TableCell, HeadingLevel, Packer } from 'docx';
+import { Loader2 } from "lucide-react"; // Using lucide-react for spinner
 
 export default function DocumentGenerator() {
-  const simalaData = {
-    "informe_necesidad": [
-      {
-        "id": "1",
-        "title": "Antecedentes",
-        "content": "El Gobierno Autónomo Descentralizado de Chimborazo, en cumplimiento de sus funciones y competencias establecidas en la Constitución de la República del Ecuador y la Ley Orgánica de Gestión de Riesgos, requiere garantizar el adecuado funcionamiento de sus equipos de computación y periféricos. Históricamente, la falta de mantenimiento preventivo y correctivo ha generado interrupciones en los servicios administrativos, afectando la eficiencia operativa. Económicamente, la inversión en mantenimiento es más rentable que la adquisición de nuevos equipos, lo que justifica la necesidad de este servicio."
-      },
-      {
-        "id": "2",
-        "title": "Objetivo general",
-        "content": "El objetivo general de la contratación del servicio de mantenimiento y reparación de equipos de computación y periféricos es asegurar la operatividad continua y eficiente de los recursos tecnológicos del Gobierno Autónomo Descentralizado de Chimborazo, contribuyendo así a la mejora de la gestión pública."
-      },
-      {
-        "id": "3",
-        "title": "Objetivos específicos",
-        "content": [
-          "1. Realizar mantenimiento preventivo y correctivo de los equipos de computación y periféricos para minimizar el tiempo de inactividad y prolongar la vida útil de los mismos.",
-          "2. Garantizar la disponibilidad de soporte técnico especializado para resolver incidencias de manera oportuna, mejorando la eficiencia en la atención de los procesos administrativos."
-        ]
-      },
-      {
-        "id": "4",
-        "title": "Identificación de la necesidad",
-        "content": "La identificación de la necesidad se fundamenta en los siguientes puntos: 1. La frecuencia de fallas en los equipos de computación ha incrementado, lo que afecta la continuidad de las actividades administrativas. 2. La falta de un plan de mantenimiento ha llevado a un aumento en los costos de reparación y reemplazo de equipos. 3. La dependencia de la tecnología en la gestión pública requiere un servicio de mantenimiento que asegure la operatividad y eficiencia en el uso de los recursos."
-      },
-      {
-        "id": "5",
-        "title": "Justificación",
-        "content": "La contratación del servicio de mantenimiento y reparación de equipos de computación y periféricos se justifica en virtud de la necesidad de garantizar la continuidad operativa de las actividades del Gobierno Autónomo Descentralizado de Chimborazo. De acuerdo con el Art. 48 del Reglamento a la Ley Orgánica del Sistema Nacional de Contratación Públicas, es imperativo asegurar que los bienes y servicios adquiridos cumplan con los estándares de calidad y eficiencia requeridos para el adecuado funcionamiento de la administración pública. Además, el cumplimiento de esta contratación permitirá optimizar los recursos económicos, evitando gastos innecesarios por fallas técnicas y garantizando un servicio público eficiente y eficaz."
-      },
-      {
-        "id": "6",
-        "title": "Especificaciones técnicas o términos de referencia",
-        "content": [
-          {
-            "article": "1",
-            "description": "Mantenimiento preventivo de equipos de computación.",        
-            "CPC": "123456",
-            "unit": "Servicio",
-            "quantity": "12"
-          },
-          {
-            "article": "2",
-            "description": "Reparación de periféricos (impresoras, escáneres, etc.).",   
-            "CPC": "123457",
-            "unit": "Servicio",
-            "quantity": "10"
-          },
-          {
-            "article": "3",
-            "description": "Soporte técnico especializado.",
-            "CPC": "123458",
-            "unit": "Servicio",
-            "quantity": "1"
-          }
-        ]
-      },
-      {
-        "id": "7",
-        "title": "Análisis beneficio, eficiencia o efectividad",
-        "content": "El análisis de eficiencia indica que la contratación de un servicio especializado en mantenimiento y reparación permitirá reducir los costos operativos a largo plazo, al evitar la compra de nuevos equipos y disminuir el tiempo de inactividad. La implementación de un plan de mantenimiento preventivo y correctivo se traduce en una mejora en la productividad del personal, al asegurar que los equipos estén siempre en condiciones óptimas para su uso. Esto, a su vez, impactará positivamente en la calidad del servicio que se brinda a la ciudadanía, cumpliendo con los principios de eficiencia y eficacia establecidos en la normativa vigente.\n\nAdicionalmente, la efectividad de esta contratación se verá reflejada en la capacidad del Gobierno Autónomo Descentralizado de Chimborazo para responder de manera ágil y eficiente a las demandas de la población, garantizando que los procesos administrativos se desarrollen sin contratiempos. La inversión en mantenimiento no solo es una medida correctiva, sino también preventiva, que asegura la sostenibilidad de los recursos tecnológicos y, por ende, la mejora continua de la gestión pública."
-      },
-      {
-        "id": "8",
-        "title": "Responsabilidad del requerimiento",
-        "content": "La responsabilidad del requerimiento recae en la Dirección de Tecnología de la Información y Comunicación del Gobierno Autónomo Descentralizado de Chimborazo, que será la encargada de supervisar la ejecución del contrato, asegurando que se cumplan los términos establecidos y que los servicios prestados respondan a las necesidades operativas de la institución. Asimismo, se contará con el apoyo del Departamento de Finanzas para la gestión presupuestaria y la adecuada asignación de recursos para la contratación."
-      }
-    ]
-  }
-
+  
   const location = useLocation();
   const document = location.state?.document || {};
   const [objDoc, setObjDoc] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingIndex, setLoadingIndex] = useState(null);
   const [points, setPoints] = useState([]);
   const [userInputs, setUserInputs] = useState({});
   // const [requestCount, setRequestCount] = useState({});
   const [correctionHistory, setCorrectionHistory] = useState({}); // Nuevo estado para manejar el historial de correcciones
 
 
-// Función para procesar el JSON
-// Función para procesar el JSON y detectar tablas
-  // function processJSONData(data) {
-  // if (!data || typeof data !== 'object') {
-  //   console.error("Error: la estructura de datos no es válida.");
-  //   return [];
-  // }
-
-  // const points = [];
-
-  // Object.keys(data).forEach((key) => {
-  //   const value = data[key];
-
-  //   if (Array.isArray(value)) {
-  //     value.forEach((section) => {
-  //       const id = section.id || "Sin ID";
-  //       const title = section.title || "Sin título";
-  //       const content = section.content || "Sin contenido";
-
-  //       // Detecta si `content` es un array de objetos (posible tabla)
-  //       let isTable = false;
-  //       let tableHeaders = [];
-  //       let tableRows = [];
-
-  //       if (Array.isArray(content) && content.every(item => typeof item === 'object')) {
-  //         isTable = true;
-  //         // Obtén los encabezados de la tabla (las claves del primer objeto)
-  //         tableHeaders = Object.keys(content[0]);
-  //         // Obtén las filas de la tabla
-  //         tableRows = content.map(row => Object.values(row));
-  //       }
-
-  //       points.push({
-  //         id,
-  //         title,
-  //         content: isTable ? { type: "table", headers: tableHeaders, rows: tableRows } : content,
-  //       });
-  //     });
-  //   }
-  // });
-
-  // if (points.length === 0) {
-  //   console.error("Error: no se encontraron arrays en los datos.");
-  //   return [];
-  // }
-
-  // return points;
-  // }
 
   function processJSONData(data) {
     // Asegurarse de que los datos son un objeto
@@ -143,38 +26,46 @@ export default function DocumentGenerator() {
   
     const points = [];
   
+    // Función recursiva para procesar arrays en cualquier nivel
+    function processArray(arr) {
+      arr.forEach((section) => {
+        const id = section.id || "Sin ID";
+        const title = section.title || "Sin título";
+  
+        // Concatenar todos los campos de contenido (`content`, `content2`, `content3`, etc.)
+        let concatenatedContent = "";
+        let contentFields = Object.keys(section).filter((field) => field.startsWith("content"));
+        contentFields.forEach((field) => {
+          concatenatedContent += section[field] ? section[field] + " " : "";
+        });
+        concatenatedContent = concatenatedContent.trim();
+  
+        // Detectar si el contenido concatenado es una tabla o un array de cadenas
+        let isTable = false;
+        let tableHeaders = [];
+        let tableRows = [];
+  
+        if (Array.isArray(section.content) && section.content.every(item => typeof item === 'object')) {
+          isTable = true;
+          tableHeaders = Object.keys(section.content[0]);
+          tableRows = section.content.map(row => Object.values(row));
+        } else if (Array.isArray(section.content) && section.content.every(item => typeof item === 'string')) {
+          concatenatedContent = section.content.join(" ");
+        }
+  
+        points.push({
+          id,
+          title,
+          content: isTable ? { type: "table", headers: tableHeaders, rows: tableRows } : concatenatedContent,
+        });
+      });
+    }
+  
+    // Recorrer cada clave del objeto data para encontrar arrays
     Object.keys(data).forEach((key) => {
       const value = data[key];
-  
       if (Array.isArray(value)) {
-        value.forEach((section) => {
-          const id = section.id || "Sin ID";
-          const title = section.title || "Sin título";
-          const content = section.content || "Sin contenido";
-  
-          // Detectar si `content` es un array de objetos (posible tabla)
-          let isTable = false;
-          let tableHeaders = [];
-          let tableRows = [];
-  
-          if (Array.isArray(content) && content.every(item => typeof item === 'object')) {
-            isTable = true;
-            // Obtener los encabezados de la tabla (las claves del primer objeto)
-            tableHeaders = Object.keys(content[0]);
-            // Obtener las filas de la tabla
-            tableRows = content.map(row => Object.values(row));
-          } 
-          // Caso de array de cadenas
-          else if (Array.isArray(content) && content.every(item => typeof item === 'string')) {
-            // Aquí puedes procesar el array de cadenas si es necesario
-          }
-  
-          points.push({
-            id,
-            title,
-            content: isTable ? { type: "table", headers: tableHeaders, rows: tableRows } : content,
-          });
-        });
+        processArray(value); // Procesar si es un array
       }
     });
   
@@ -196,48 +87,15 @@ export default function DocumentGenerator() {
     );
   };
 
-  const handleRequestChange = async (index) => {
-    const userRequest = userInputs[index];
-    if (!userRequest) return;
   
-    const requestData = {documentoId: document.id, titulo: points[index].title, contenido: points[index].content, solicitud: userRequest};
-  
-    try {
-      const response = await fetch('http://localhost:3000/api/correct', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData),
-      });
-  
-      const data = await response.json();
-      console.log('cambio:', data);
-
-
-      if (data.success) {
-        // Actualizar el contenido con la respuesta
-        const newPoints = [...points];
-        newPoints[index].content = data.correctedContent;
-        setPoints(newPoints);
-
-        // Guardar el historial de correcciones
-        setCorrectionHistory((prevHistory) => {
-          const pointHistory = prevHistory[index] || [];
-          return {
-            ...prevHistory,
-            [index]: [...pointHistory, data.correctedContent]
-          };
-        });
-
-        // Limpiar el campo de entrada
-        setUserInputs((prev) => ({ ...prev, [index]: '' }));
-      } else {
-        console.error("Error en la respuesta:", data.message);
-      }
-    } catch (error) {
-      console.error("Error al enviar la solicitud de cambio:", error);
-    }
+  const handleEditCorrectionHistory = (index, versionIndex, newContent) => {
+    setCorrectionHistory((prevHistory) => {
+      const updatedHistory = { ...prevHistory };
+      updatedHistory[index] = [...updatedHistory[index]];
+      updatedHistory[index][versionIndex] = newContent;
+      return updatedHistory;
+    });
   };
-  
 
   const handleUserInputChange = (pointId, value) => {
     setUserInputs((prevInputs) => ({ ...prevInputs, [pointId]: value }));
@@ -253,7 +111,7 @@ export default function DocumentGenerator() {
   };
 
 
-
+// generar el informe
   const handleGenerateReport = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -271,11 +129,11 @@ export default function DocumentGenerator() {
       });
       const data = await response.json(); 
 
-      console.log('data sin procesar:', data);
+        // Parsear el campo `response` dentro de `data`
+      const parsedResponse = JSON.parse(data.response);
+      console.log('parsedResponse:', parsedResponse); 
 
-      // const jsonData = JSON.parse(data); // Convertir la respuesta a JSON
-      const processedPoints = processJSONData(data);
-
+      const processedPoints = processJSONData(parsedResponse);
       // const processedPoints = processJSONData(simalaData);
       console.log('processedPoints:', processedPoints);
       setPoints(processedPoints);
@@ -288,51 +146,162 @@ export default function DocumentGenerator() {
     }
   };
 
-
+  const handleRequestChange = async (index) => {
+    const userRequest = userInputs[index];
+    if (!userRequest) return;
+  
+    setLoadingIndex(index);
+  
+    try {
+      const response = await fetch("http://localhost:3000/api/correct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentoId: document.id,
+          titulo: points[index].title,
+          contenido: points[index].content,
+          solicitud: userRequest,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        setPoints((prev) =>
+          prev.map((point, i) =>
+            i === index ? { ...point, content: data.correctedContent } : point
+          )
+        );
+  
+        setCorrectionHistory((prev) => ({
+          ...prev,
+          [index]: [points[index].content, ...(prev[index] || [])],
+        }));
+  
+        setUserInputs((prev) => ({ ...prev, [index]: "" }));
+      } else {
+        console.error("Error en la respuesta:", data.message);
+      }
+    } catch (error) {
+      console.error("Error al enviar la solicitud de cambio:", error);
+    } finally {
+      setLoadingIndex(null);
+    }
+  };
 
 // Generar el documento de Word
-  const generateWordDocument = () => {
-    const doc = new Document();
+const generateWordDocument = () => {
+  // Crear el documento con metadatos necesarios
+  const doc = new Document({
+    creator: "Tu Aplicación",
+    title: "Documento Generado",
+    description: "Documento generado automáticamente",
+    sections: []
+  });
 
-    points.forEach((point) => {
-      doc.addParagraph(new Paragraph({
-        children: [
-          new TextRun({ text: point.title, bold: true, size: 24 }),
-          new TextRun({ text: '\n' }),
-          Array.isArray(point.content) ? (
-            point.content.map((paragraph, index) => (
-              new Paragraph({
-                children: [
-                  new TextRun(paragraph),
-                ]
-              })
-            ))
-          ) : (
-            new Paragraph({
-              children: [
-                new TextRun(point.content),
-              ]
+  // Verificar si points existe y tiene elementos
+  if (!points || points.length === 0) {
+    console.error('No hay puntos para generar el documento');
+    return;
+  }
+
+  // Crear contenido consolidado en una sección
+  const children = points.flatMap((point, index) => {
+    const sections = [];
+
+    // Añadir título del punto
+    sections.push(
+      new Paragraph({
+        text: `${point.id}. ${point.title}`,
+        heading: HeadingLevel.HEADING_2,
+      })
+    );
+
+    // Procesar contenido según su tipo
+    if (point.content?.type === "table" && Array.isArray(point.content.rows)) {
+      const table = new Table({
+        rows: [
+          new TableRow({
+            children: (point.content.headers || []).map(
+              (header) =>
+                new TableCell({
+                  children: [new Paragraph({ text: header || '', bold: true })],
+                })
+            ),
+          }),
+          ...(point.content.rows || []).map((row) =>
+            new TableRow({
+              children: row.map(
+                (cell) =>
+                  new TableCell({
+                    children: [new Paragraph({ text: cell || '' })],
+                  })
+              ),
             })
           ),
-        ]
-      }));
+        ],
+      });
+      sections.push(table);
+    } else {
+      sections.push(
+        new Paragraph({
+          text: typeof point.content === 'string' ? point.content : '',
+          spacing: { after: 200 },
+        })
+      );
+    }
 
-      // Si es una tabla, agregamos cada fila de la tabla
-      if (point.content.type === "table") {
-        point.content.rows.forEach(row => {
-          const rowParagraphs = row.map(cell => new TextRun(cell));
-          doc.addParagraph(new Paragraph({ children: rowParagraphs }));
-        });
-      }
-    });
+    // Incluir historial de correcciones si existe
+    if (correctionHistory[index]) {
+      correctionHistory[index].forEach((versionContent, versionIndex) => {
+        sections.push(
+          new Paragraph({
+            text: `Corrección ${versionIndex + 1}:`,
+            heading: HeadingLevel.HEADING_3,
+          }),
+          new Paragraph({
+            text: versionContent || '',
+            spacing: { after: 200 },
+          })
+        );
+      });
+    }
 
+    return sections;
+  });
+
+  // Añadir una sección al documento con todos los elementos
+  doc.addSection({
+    properties: {},
+    children: children.flat()
+  });
+
+  try {
+    // Descargar el documento Word con manejo mejorado del Blob
     Packer.toBlob(doc).then((blob) => {
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'documento_generado.docx';
+      // Crear un nuevo blob con el tipo MIME correcto
+      const docBlob = new Blob([blob], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
+      
+      // Usar window.document en lugar de document
+      const link = window.document.createElement("a");
+      link.href = URL.createObjectURL(docBlob);
+      link.download = "documento_generado.docx";
       link.click();
+      
+      // Limpiar el objeto URL después de la descarga
+      setTimeout(() => {
+        URL.revokeObjectURL(link.href);
+      }, 100);
+    }).catch(error => {
+      console.error('Error al generar el blob:', error);
     });
-  };
+  } catch (error) {
+    console.error('Error al generar el documento:', error);
+  }
+};
+
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen space-y-8">
@@ -369,6 +338,7 @@ export default function DocumentGenerator() {
           {points.map((point, pointIndex) => (
             <div key={pointIndex} className="bg-white p-4 rounded-md shadow-md space-y-4 border border-gray-300">
               <h3 className="text-lg font-semibold">{point.id}. {point.title}</h3>
+              <p className="text-md font-semibold">Versión 1: </p> 
   
               {point.content.type === "table" ? (
                 <table className="table-auto w-full border-collapse border border-gray-300">
@@ -411,33 +381,40 @@ export default function DocumentGenerator() {
               )
             }
 
-           {/* Aquí empieza el historial de correcciones */}
+            {/* Historial de correcciones */}
             {correctionHistory[pointIndex] && correctionHistory[pointIndex].map((versionContent, versionIndex) => (
               <div key={versionIndex} className="space-y-4">
-                <h3 className="text-md font-semibold">Versión {versionIndex + 2}</h3>
-                <textarea
+                <h3 className="text-md font-semibold">Versión {versionIndex + 2}: </h3>
+                <textarea 
                   value={versionContent}
-                  readOnly
+                  onChange={(e) => handleEditCorrectionHistory(pointIndex, versionIndex, e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-md"
                   rows="5"
                 />
               </div>
-            ))}
+            ))} 
 
             {/* Solicitud de nuevo cambio */}
             <textarea
               value={userInputs[pointIndex] || ''}
               onChange={(e) => handleUserInputChange(pointIndex, e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-2 border border-purple-700 rounded-md"
               placeholder="Escriba su solicitud de cambio aquí..."
               rows="3"
+              required
             />
             <button
               onClick={() => handleRequestChange(pointIndex)}
               className="py-1 px-3 bg-blue-500 text-white rounded-md mt-2"
               disabled={correctionHistory[pointIndex]?.length >= 7} // Deshabilita el botón si hay 7 correcciones
             >
-              {correctionHistory[pointIndex]?.length >= 7 ? "Máximo de 7 correcciones alcanzado" : "Enviar cambio a la IA"}
+              {
+               correctionHistory[pointIndex]?.length >= 7 ? "Máximo de 7 correcciones alcanzado" : "Enviar cambio a la IA"
+              }
+              {loadingIndex === pointIndex && (
+                <div className="spinner-border animate-spin ml-2 w-5 h-5 border-2 border-t-transparent border-white rounded-full" />
+              )}
+              
             </button>
 
             </div> 

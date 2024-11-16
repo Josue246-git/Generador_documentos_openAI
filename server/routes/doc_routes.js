@@ -1,5 +1,5 @@
 import express from 'express';
-import {generarEstDocumento, obtenerDocumentosCon, generarDocumento} from '../controllers/docController.js';
+import {generarEstDocumento, obtenerDocumentosCon, generarDocumento, corregirDocumento} from '../controllers/docController.js';
 
 
 const router = express.Router();
@@ -10,6 +10,6 @@ router.get('/api/documentos', obtenerDocumentosCon);
 
 router.post('/api/generateDoc', generarDocumento);
 
-router.post('/api/correct', generarDocumento);
+router.post('/api/correct', corregirDocumento);
 
 export default router; 
