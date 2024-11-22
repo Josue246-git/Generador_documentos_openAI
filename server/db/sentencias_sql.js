@@ -42,19 +42,46 @@ export async function obtenerDocumentos() {
   }
 } 
 
-
 export async function obtenerDocumentoPorId(documentoId) {
   try {
     const query = `
-      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos, fecha_creacion
+      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos
       FROM estr_documentos
       WHERE id = $1
     `;
     const result = await pool.query(query, [documentoId]);
     return result.rows[0];
+
+
   } catch (error) {
     console.error('Error al obtener el documento por ID:', error);
     throw error;
   }
 }
 
+
+
+export  async function actualizarDocumento(documentoId, titulo, descripcion, prompt_user, contexto_base, puntos) {
+  try {
+    const query = `
+      UPDATE estr_documentos
+      SET titulo = $2, descripcion = $3, prompt_user = $4, contexto_base = $5, puntos = $6
+      WHERE id = $1
+    `;
+    await pool.query(query, [documentoId, titulo, descripcion, prompt_user, contexto_base, puntos]);
+  } catch (error) {
+    console.error('Error al actualizar documento:', error);
+    throw error;
+  }
+}
+
+
+export async function eliminarDocumento(documentoId) {
+  try {
+    const query = 'DELETE FROM estr_documentos WHERE id = $1';
+    await pool.query(query, [documentoId]);
+  } catch (error) {
+    console.error('Error al eliminar documento:', error);
+    throw error;
+  }
+}

@@ -7,6 +7,7 @@ import AdminInterface from './components/AdminInterface';
 import MainMenu from './components/mainMenu';
 import DocumentGenerator from './components/GeneradorDoc';
 import ProtectedRoute from './components/ProtectedRoute';
+import EditarEstrDocumento from './components/AdminIntEdit';
 
 function App() {
   const [rol, setRol] = useState('');
@@ -24,7 +25,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginForm />} />
         
-        {/* Rutas protegidas para admin */}
+        {/* Rutas protegidas para admin, crear estructura */}
         <Route
           path="/admin"
           element={
@@ -33,6 +34,17 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Rutas protegidas para admin, editar estrctura */}
+        <Route
+          path="/admin/edit/:id"
+          element={
+            <ProtectedRoute>
+              <EditarEstrDocumento />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Ruta principal para usuarios comunes */}
         <Route
           path="/generate"

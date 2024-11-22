@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../db/conexion_db.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { insertarDocumento, obtenerDocumentos, obtenerDocumentoPorId } from '../db/sentencias_sql.js';
+import { insertarDocumento, obtenerDocumentos, obtenerDocumentoPorId, actualizarDocumento, eliminarDocumento } from '../db/sentencias_sql.js';
 
 dotenv.config();
 
@@ -45,6 +45,21 @@ export const obtenerDocumentosCon = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener documentos:', error);
     res.status(500).json({ success: false, error: 'Error al obtener documentos' });
+  }
+};
+
+export const obtenerDocumentoConId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Obtener documento con id:', id);
+    const documento = await obtenerDocumentoPorId(id);
+
+    // console.log('Documento:', documento);
+
+    res.status(200).json({ success: true, documento });
+  } catch (error) {
+    console.error('Error al obtener el documento:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener el documento' });
   }
 };
 
@@ -226,25 +241,40 @@ export const corregirDocumento = async (req, res) => {
 
 
 
-// router.post('/chat', async (req, res) => {
-//   const { message, previousResponse = '' } = req.body; 
-//   try {
-//     const completion = await openai.chat.completions.create({
-//       model: 'gpt-3.5-turbo',
-//       messages: [
-//         { role: 'system',  content: `You are an expert editor who helps users refine and improve documents related to government contracts and legal frameworks. Your role is to make edits as per the user's specific instructions, while preserving formal legal tone, clarity, and compliance with Ecuadorian regulations. Please ensure that you maintain the key sections in all responses, which are: 1. Background, 2.1. General objective, 2.2. Specific objectives, 3. Identification of the need, 4. Justification, 5. Technical specifications or terms of reference, 6. Analysis of benefits, efficiency or effectiveness, 7. Responsibility for the requirement..` },
-//         { role: 'assistant', content: previousResponse },
-//         { role: 'user', content: message }
-//       ]
-//     });
+export const updateEstDocument = async (req, res) => { 
 
-//     const updatedResponse = completion.choices[0].message.content.trim();
-//     res.json({ response: updatedResponse, previousResponse: updatedResponse });
-//   } catch (error) {
-//     console.error('Error:', error);
-//     res.status(500).json({ error: 'Error processing the request' });
-//   }
-// });
+  try {
+    const { id } = req.params;
+    const { title, descripcion, userPrompt, context, sections } = req.body;
+    console.log('id:', id);
+    console.log('titulo:', title);
+    console.log('descripcion:', descripcion);
+    console.log('prompt_user:', userPrompt);
+    console.log('contexto_base:', context);
+    console.log('puntos:', sections); 
+
+    await actualizarDocumento(id, title, descripcion, userPrompt, context, sections);
+
+    res.status(200).json({ success: true, message: 'Documento actualizado exitosamente' });
+  } 
+  catch (error) {
+    console.error('Error al actualizar el documento:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar el documento' });
+  }
+}
 
 
-// Ruta de autenticación
+export const deleteEstDocument = async (req, res) => { 
+  try {
+    const { id } = req.params;
+    console.log('Deleted estructuraDocuemtno con id:', id);
+
+    await eliminarDocumento(id);
+
+    res.status(200).json({ success: true, message: 'Documento eliminado exitosamente' });
+  } 
+  catch (error) {
+    console.error('Error al eliminar documento:', error);
+    res.status(500).json({ success: false, message: 'Error al eliminar documento' });
+  }
+}

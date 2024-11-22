@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { Document, Paragraph, Table, TableRow, TableCell, HeadingLevel, Packer } from 'docx';
-import { Loader2 } from "lucide-react"; // Using lucide-react for spinner
+import { Loader2, Home } from "lucide-react"; // Añadido el ícono Home
 
 export default function DocumentGenerator() {
   
@@ -9,12 +9,11 @@ export default function DocumentGenerator() {
   const document = location.state?.document || {};
   const [objDoc, setObjDoc] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingWord, setIsGeneratingWord] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(null);
   const [points, setPoints] = useState([]);
   const [userInputs, setUserInputs] = useState({});
-  // const [requestCount, setRequestCount] = useState({});
-  const [correctionHistory, setCorrectionHistory] = useState({}); // Nuevo estado para manejar el historial de correcciones
-
+  const [correctionHistory, setCorrectionHistory] = useState({});// Nuevo estado para manejar el historial de correcciones
 
 
   function processJSONData(data) {
@@ -128,7 +127,6 @@ export default function DocumentGenerator() {
         body: JSON.stringify(requestData),
       });
       const data = await response.json(); 
-
         // Parsear el campo `response` dentro de `data`
       const parsedResponse = JSON.parse(data.response);
       console.log('parsedResponse:', parsedResponse); 
@@ -167,15 +165,17 @@ export default function DocumentGenerator() {
       const data = await response.json();
   
       if (data.success) {
+        // Update points with new content
         setPoints((prev) =>
           prev.map((point, i) =>
             i === index ? { ...point, content: data.correctedContent } : point
           )
         );
   
+        // Update correction history - now adding new versions at the end
         setCorrectionHistory((prev) => ({
           ...prev,
-          [index]: [points[index].content, ...(prev[index] || [])],
+          [index]: [...(prev[index] || []), points[index].content],
         }));
   
         setUserInputs((prev) => ({ ...prev, [index]: "" }));
@@ -190,211 +190,216 @@ export default function DocumentGenerator() {
   };
 
 // Generar el documento de Word
-const generateWordDocument = () => {
-  // Crear el documento con metadatos necesarios
-  const doc = new Document({
-    creator: "Tu Aplicación",
-    title: "Documento Generado",
-    description: "Documento generado automáticamente",
-    sections: []
-  });
-
-  // Verificar si points existe y tiene elementos
-  if (!points || points.length === 0) {
-    console.error('No hay puntos para generar el documento');
-    return;
-  }
-
-  // Crear contenido consolidado en una sección
-  const children = points.flatMap((point, index) => {
-    const sections = [];
-
-    // Añadir título del punto
-    sections.push(
-      new Paragraph({
-        text: `${point.id}. ${point.title}`,
-        heading: HeadingLevel.HEADING_2,
-      })
-    );
-
-    // Procesar contenido según su tipo
-    if (point.content?.type === "table" && Array.isArray(point.content.rows)) {
-      const table = new Table({
-        rows: [
-          new TableRow({
-            children: (point.content.headers || []).map(
-              (header) =>
-                new TableCell({
-                  children: [new Paragraph({ text: header || '', bold: true })],
-                })
-            ),
-          }),
-          ...(point.content.rows || []).map((row) =>
-            new TableRow({
-              children: row.map(
-                (cell) =>
-                  new TableCell({
-                    children: [new Paragraph({ text: cell || '' })],
-                  })
-              ),
-            })
-          ),
-        ],
+  const generateWordDocument = async () => {
+    setIsGeneratingWord(true);
+    
+    try {
+      const doc = new Document({
+        creator: "Tu Aplicación",
+        title: "Documento Generado",
+        description: "Documento generado automáticamente",
+        sections: []
       });
-      sections.push(table);
-    } else {
-      sections.push(
-        new Paragraph({
-          text: typeof point.content === 'string' ? point.content : '',
-          spacing: { after: 200 },
-        })
-      );
-    }
 
-    // Incluir historial de correcciones si existe
-    if (correctionHistory[index]) {
-      correctionHistory[index].forEach((versionContent, versionIndex) => {
+      if (!points || points.length === 0) {
+        throw new Error('No hay puntos para generar el documento');
+      }
+
+      const children = points.flatMap((point, index) => {
+        const sections = [];
         sections.push(
           new Paragraph({
-            text: `Corrección ${versionIndex + 1}:`,
-            heading: HeadingLevel.HEADING_3,
-          }),
-          new Paragraph({
-            text: versionContent || '',
-            spacing: { after: 200 },
+            text: `${point.id}. ${point.title}`,
+            heading: HeadingLevel.HEADING_2,
           })
         );
+
+        if (point.content?.type === "table" && Array.isArray(point.content.rows)) {
+          const table = new Table({
+            rows: [
+              new TableRow({
+                children: (point.content.headers || []).map(
+                  (header) =>
+                    new TableCell({
+                      children: [new Paragraph({ text: header || '', bold: true })],
+                    })
+                ),
+              }),
+              ...(point.content.rows || []).map((row) =>
+                new TableRow({
+                  children: row.map(
+                    (cell) =>
+                      new TableCell({
+                        children: [new Paragraph({ text: cell || '' })],
+                      })
+                  ),
+                })
+              ),
+            ],
+          });
+          sections.push(table);
+        } else {
+          sections.push(
+            new Paragraph({
+              text: typeof point.content === 'string' ? point.content : '',
+              spacing: { after: 200 },
+            })
+          );
+        }
+
+        // Add correction history in chronological order
+        if (correctionHistory[index]) {
+          correctionHistory[index].forEach((versionContent, versionIndex) => {
+            sections.push(
+              new Paragraph({
+                text: `Versión ${versionIndex + 2}:`,
+                heading: HeadingLevel.HEADING_3,
+              }),
+              new Paragraph({
+                text: versionContent || '',
+                spacing: { after: 200 },
+              })
+            );
+          });
+        }
+
+        return sections;
       });
-    }
 
-    return sections;
-  });
+      doc.addSection({
+        properties: {},
+        children: children.flat()
+      });
 
-  // Añadir una sección al documento con todos los elementos
-  doc.addSection({
-    properties: {},
-    children: children.flat()
-  });
-
-  try {
-    // Descargar el documento Word con manejo mejorado del Blob
-    Packer.toBlob(doc).then((blob) => {
-      // Crear un nuevo blob con el tipo MIME correcto
+      const blob = await Packer.toBlob(doc);
       const docBlob = new Blob([blob], { 
         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
       });
       
-      // Usar window.document en lugar de document
       const link = window.document.createElement("a");
       link.href = URL.createObjectURL(docBlob);
       link.download = "documento_generado.docx";
       link.click();
       
-      // Limpiar el objeto URL después de la descarga
       setTimeout(() => {
         URL.revokeObjectURL(link.href);
       }, 100);
-    }).catch(error => {
-      console.error('Error al generar el blob:', error);
-    });
-  } catch (error) {
-    console.error('Error al generar el documento:', error);
-  }
-};
 
+    } catch (error) {
+      console.error('Error al generar el documento:', error);
+    } finally {
+      setIsGeneratingWord(false);
+    }
+  };
 
-  return (
-    <div className="p-8 bg-gray-100 min-h-screen space-y-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Generador de: {document.titulo}</h1>
-  
-      <form onSubmit={handleGenerateReport} className="space-y-4">
-        <label className="block text-sm font-medium text-gray-900">
-          {document.prompt_user}:
-        </label>
-        <textarea
-          className="w-full p-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          rows="5"
-          placeholder={document.prompt_user || "Ingrese los detalles..."}
-          value={objDoc}
-          onChange={(e) => setObjDoc(e.target.value)}
-          required
-        />
-        <button
-          type="submit"
-          className="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-500 focus:outline-none"
-        >
-          Generar Informe
-        </button>
-      </form>
-  
-      {isLoading ? (
-        <div className="flex justify-center">
-          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-blue-500 rounded-full" />
-        </div>
-      ) : (
-        <div className="output space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Resultados</h3>
+return (
+  <div className="p-8 bg-gray-100 min-h-screen ">
+    <div className="max-w-6xl mx-auto space-y-8"> {/* Añadir este div contenedor */}
+    <div className="flex justify-between items-center mb-8">
+          <Link 
+            to="/main-menu" 
+            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
+          >
+            <Home className="w-7 h-7" />
+          </Link>
+          <h1 className="text-3xl font-bold text-center">
+            Generador de: {document.titulo}
+          </h1>
+    </div>
+
+    <form onSubmit={handleGenerateReport} className="space-y-4">
+      <label className="block text-m font-medium text-gray-900">
+        {document.prompt_user}:
+      </label>
+      <textarea
+        className="w-full p-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        rows="5"
+        placeholder={document.prompt_user || "Ingrese los detalles..."}
+        value={objDoc}
+        onChange={(e) => setObjDoc(e.target.value)}
+        required
+      />
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            Generando...
+          </>
+        ) : (
+          'Generar Informe'
+        )}
+      </button>
+    </form>
+
+    <div className="output space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900">Resultados</h3>
+      
+      {points.map((point, pointIndex) => (
+        <div key={pointIndex} className="bg-white p-4 rounded-md shadow-md space-y-4 border border-gray-300">
+          <h3 className="text-lg font-semibold">{point.id}. {point.title}</h3>
           
-          {points.map((point, pointIndex) => (
-            <div key={pointIndex} className="bg-white p-4 rounded-md shadow-md space-y-4 border border-gray-300">
-              <h3 className="text-lg font-semibold">{point.id}. {point.title}</h3>
-              <p className="text-md font-semibold">Versión 1: </p> 
-  
-              {point.content.type === "table" ? (
-                <table className="table-auto w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr>
-                      {point.content.headers.map((header, headerIndex) => (
-                        <th key={headerIndex} className="px-4 py-2 border border-gray-300 bg-gray-200 font-semibold text-left">
-                          {header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {point.content.rows.map((row, rowIndex) => (
-                      <tr key={rowIndex}>
-                        {row.map((cell, cellIndex) => (
-                          <td key={cellIndex} className="px-4 py-2 border border-gray-300">
+          {/* Original Content */}
+          <div className="space-y-2">
+            <p className="text-md font-semibold">Versión actual:</p>
+            {point.content.type === "table" ? (
+              <table className="table-auto w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr>
+                    {point.content.headers.map((header, headerIndex) => (
+                      <th key={headerIndex} className="px-4 py-2 border border-gray-300 bg-gray-200 font-semibold text-left">
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {point.content.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {row.map((cell, cellIndex) => (
+                        <td key={cellIndex} className="px-4 py-2 border border-gray-300">
                           <textarea
                             value={cell}
-                            onChange={(e) =>
-                              handleTableCellChange(pointIndex, rowIndex, cellIndex, e.target.value)
-                            }
-                            className="w-full p-2  border-gray-300 rounded-md resize-none"
-                            rows="3" // Puedes ajustar este valor dependiendo del tamaño de la celda
+                            onChange={(e) => handleTableCellChange(pointIndex, rowIndex, cellIndex, e.target.value)}
+                            className="w-full p-2 border-gray-300 rounded-md resize-none"
+                            rows="3"
                           />
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <textarea
+                className="w-full p-2 border border-gray-300 rounded-md"
+                rows="5"
+                value={point.content}
+                onChange={(e) => handleChangeContent(pointIndex, e.target.value)}
+              />
+            )}
+          </div>
 
-              ) : (
-                <textarea
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  rows="5"
-                  value={point.content} 
-                  onChange={(e) => handleChangeContent(pointIndex, e.target.value)}
-                />
-              )
-            }
+          {/* Correction History - Now showing in chronological order */}
+          {correctionHistory[pointIndex] && correctionHistory[pointIndex].map((versionContent, versionIndex) => (
+            <div key={versionIndex} className="space-y-2">
+              <p className="text-md font-semibold">
+                Versión {versionIndex + 2}:
+              </p>
+              <textarea
+                value={versionContent}
+                onChange={(e) => handleEditCorrectionHistory(pointIndex, versionIndex, e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                rows="5"
+              />
+            </div>
+          ))}
 
-            {/* Historial de correcciones */}
-            {correctionHistory[pointIndex] && correctionHistory[pointIndex].map((versionContent, versionIndex) => (
-              <div key={versionIndex} className="space-y-4">
-                <h3 className="text-md font-semibold">Versión {versionIndex + 2}: </h3>
-                <textarea 
-                  value={versionContent}
-                  onChange={(e) => handleEditCorrectionHistory(pointIndex, versionIndex, e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  rows="5"
-                />
-              </div>
-            ))} 
-
-            {/* Solicitud de nuevo cambio */}
+          {/* New Change Request Section */}
+          <div className="mt-4 space-y-2">
             <textarea
               value={userInputs[pointIndex] || ''}
               onChange={(e) => handleUserInputChange(pointIndex, e.target.value)}
@@ -405,30 +410,169 @@ const generateWordDocument = () => {
             />
             <button
               onClick={() => handleRequestChange(pointIndex)}
-              className="py-1 px-3 bg-blue-500 text-white rounded-md mt-2"
-              disabled={correctionHistory[pointIndex]?.length >= 7} // Deshabilita el botón si hay 7 correcciones
+              disabled={loadingIndex === pointIndex || correctionHistory[pointIndex]?.length >= 7}
+              className="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {
-               correctionHistory[pointIndex]?.length >= 7 ? "Máximo de 7 correcciones alcanzado" : "Enviar cambio a la IA"
-              }
-              {loadingIndex === pointIndex && (
-                <div className="spinner-border animate-spin ml-2 w-5 h-5 border-2 border-t-transparent border-white rounded-full" />
+              {loadingIndex === pointIndex ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Procesando...
+                </>
+              ) : correctionHistory[pointIndex]?.length >= 7 ? (
+                "Máximo de 7 correcciones alcanzado"
+              ) : (
+                "Enviar cambio a la IA"
               )}
-              
             </button>
-
-            </div> 
-          ))}
+          </div>
         </div>
-      )}
-      
-      <button
-        onClick={generateWordDocument}
-        className="w-full py-2 px-4 bg-green-600 text-white font-semibold rounded-md hover:bg-green-500 focus:outline-none"
-      >
-        Generar Documento de Word
-      </button>
+      ))}
     </div>
-  )
+    
+    <button
+      onClick={generateWordDocument}
+      disabled={isGeneratingWord || points.length === 0}
+      className="w-full py-2 px-4 bg-green-600 text-white font-semibold rounded-md hover:bg-green-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+    >
+      {isGeneratingWord ? (
+        <>
+          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          Generando documento...
+        </>
+      ) : (
+        'Generar Documento de Word'
+      )}
+    </button>
+  </div>
+  </div>
+);
+
+  // return (
+  //   <div className="p-8 bg-gray-100 min-h-screen space-y-8">
+  //     <h1 className="text-3xl font-bold text-center mb-8">Generador de: {document.titulo}</h1>
+  
+  //     <form onSubmit={handleGenerateReport} className="space-y-4">
+  //       <label className="block text-sm font-medium text-gray-900">
+  //         {document.prompt_user}:
+  //       </label>
+  //       <textarea
+  //         className="w-full p-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  //         rows="5"
+  //         placeholder={document.prompt_user || "Ingrese los detalles..."}
+  //         value={objDoc}
+  //         onChange={(e) => setObjDoc(e.target.value)}
+  //         required
+  //       />
+  //       <button
+  //         type="submit"
+  //         className="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-500 focus:outline-none"
+  //       >
+  //         Generar Informe
+  //       </button>
+  //     </form>
+  
+  //     {isLoading ? (
+  //       <div className="flex justify-center">
+  //         <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-blue-500 rounded-full" />
+  //       </div>
+  //     ) : (
+  //       <div className="output space-y-4">
+  //         <h3 className="text-lg font-semibold text-gray-900">Resultados</h3>
+          
+  //         {points.map((point, pointIndex) => (
+  //           <div key={pointIndex} className="bg-white p-4 rounded-md shadow-md space-y-4 border border-gray-300">
+  //             <h3 className="text-lg font-semibold">{point.id}. {point.title}</h3>
+  //             <p className="text-md font-semibold">Versión 1: </p> 
+  
+  //             {point.content.type === "table" ? (
+  //               <table className="table-auto w-full border-collapse border border-gray-300">
+  //                 <thead>
+  //                   <tr>
+  //                     {point.content.headers.map((header, headerIndex) => (
+  //                       <th key={headerIndex} className="px-4 py-2 border border-gray-300 bg-gray-200 font-semibold text-left">
+  //                         {header}
+  //                       </th>
+  //                     ))}
+  //                   </tr>
+  //                 </thead>
+  //                 <tbody>
+  //                   {point.content.rows.map((row, rowIndex) => (
+  //                     <tr key={rowIndex}>
+  //                       {row.map((cell, cellIndex) => (
+  //                         <td key={cellIndex} className="px-4 py-2 border border-gray-300">
+  //                         <textarea
+  //                           value={cell}
+  //                           onChange={(e) =>
+  //                             handleTableCellChange(pointIndex, rowIndex, cellIndex, e.target.value)
+  //                           }
+  //                           className="w-full p-2  border-gray-300 rounded-md resize-none"
+  //                           rows="3" // Puedes ajustar este valor dependiendo del tamaño de la celda
+  //                         />
+  //                         </td>
+  //                       ))}
+  //                     </tr>
+  //                   ))}
+  //                 </tbody>
+  //               </table>
+
+  //             ) : (
+  //               <textarea
+  //                 className="w-full p-2 border border-gray-300 rounded-md"
+  //                 rows="5"
+  //                 value={point.content} 
+  //                 onChange={(e) => handleChangeContent(pointIndex, e.target.value)}
+  //               />
+  //             )
+  //           }
+
+  //           {/* Historial de correcciones */}
+  //           {correctionHistory[pointIndex] && correctionHistory[pointIndex].map((versionContent, versionIndex) => (
+  //             <div key={versionIndex} className="space-y-4">
+  //               <h3 className="text-md font-semibold">Versión {versionIndex + 2}: </h3>
+  //               <textarea 
+  //                 value={versionContent}
+  //                 onChange={(e) => handleEditCorrectionHistory(pointIndex, versionIndex, e.target.value)}
+  //                 className="w-full p-2 border border-gray-300 rounded-md"
+  //                 rows="5"
+  //               />
+  //             </div>
+  //           ))} 
+
+  //           {/* Solicitud de nuevo cambio */}
+  //           <textarea
+  //             value={userInputs[pointIndex] || ''}
+  //             onChange={(e) => handleUserInputChange(pointIndex, e.target.value)}
+  //             className="w-full p-2 border border-purple-700 rounded-md"
+  //             placeholder="Escriba su solicitud de cambio aquí..."
+  //             rows="3"
+  //             required
+  //           />
+  //           <button
+  //             onClick={() => handleRequestChange(pointIndex)}
+  //             className="py-1 px-3 bg-blue-500 text-white rounded-md mt-2"
+  //             disabled={correctionHistory[pointIndex]?.length >= 7} // Deshabilita el botón si hay 7 correcciones
+  //           >
+  //             {
+  //              correctionHistory[pointIndex]?.length >= 7 ? "Máximo de 7 correcciones alcanzado" : "Enviar cambio a la IA"
+  //             }
+  //             {loadingIndex === pointIndex && (
+  //               <div className="spinner-border animate-spin ml-2 w-5 h-5 border-2 border-t-transparent border-white rounded-full" />
+  //             )}
+              
+  //           </button>
+
+  //           </div> 
+  //         ))}
+  //       </div>
+  //     )}
+      
+  //     <button
+  //       onClick={generateWordDocument}
+  //       className="w-full py-2 px-4 bg-green-600 text-white font-semibold rounded-md hover:bg-green-500 focus:outline-none"
+  //     >
+  //       Generar Documento de Word
+  //     </button>
+  //   </div>
+  // )
 }
 
