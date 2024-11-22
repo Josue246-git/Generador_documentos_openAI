@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 
 export default function MainMenu() {
   const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);;
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState(null);;
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState(null); 
