@@ -15,12 +15,12 @@ const openai = new OpenAI({
 
 
 export const generarEstDocumento = async (req, res) => {
-  const { title, descripcion, userPrompt, context, sections } = req.body;
+  const { title, descripcion, userPrompt, context, sections,headerPoints, footerPoints } = req.body;
 
-  console.log( title, userPrompt, context, sections)
+  console.log( title, userPrompt, context, sections, headerPoints, footerPoints);
   try {
     // Almacenar los datos en la base de datos
-    const documentId = await insertarDocumento(title, descripcion, userPrompt, context, sections);
+    const documentId = await insertarDocumento(title, descripcion, userPrompt, context, sections, headerPoints, footerPoints);
 
     // Devolver confirmación de éxito al cliente
     res.status(200).json({
@@ -245,15 +245,17 @@ export const updateEstDocument = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { title, descripcion, userPrompt, context, sections } = req.body;
+    const { title, descripcion, userPrompt, context, sections,encabezado,pie_pagina } = req.body;
     console.log('id:', id);
     console.log('titulo:', title);
     console.log('descripcion:', descripcion);
     console.log('prompt_user:', userPrompt);
     console.log('contexto_base:', context);
     console.log('puntos:', sections); 
+    console.log('encabezado:', encabezado);
+    console.log('pie_pagina:', pie_pagina);
 
-    await actualizarDocumento(id, title, descripcion, userPrompt, context, sections);
+    await actualizarDocumento(id, title, descripcion, userPrompt, context, sections, encabezado, pie_pagina);
 
     res.status(200).json({ success: true, message: 'Documento actualizado exitosamente' });
   } 

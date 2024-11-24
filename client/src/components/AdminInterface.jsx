@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import {  Home } from "lucide-react"; // Añadido el ícono Home
 
 export default function AdminInterface() {
   const { id } = useParams(); 
@@ -10,24 +11,38 @@ export default function AdminInterface() {
   const [userPrompt, setUserPrompt] = useState('');
   const [context, setContext] = useState('');
   const [sections, setSections] = useState([{ content: '' }]);
+  const [headerPoints, setHeaderPoints] = useState([{ content: '' }]);
+  const [footerPoints, setFooterPoints] = useState([{ content: '' }]);
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
-  const handleAddSection = () => {
-    setSections([...sections, { content: '' }]);
-  };
+  // const handleAddSection = () => {
+  //   setSections([...sections, { content: '' }]);
+  // };
 
-  const handleSectionChange = (index, newContent) => {
-    setSections(
-      sections.map((section, i) => 
-        i === index ? { ...section, content: newContent } : section
-      )
-    );
-  };
+  // const handleSectionChange = (index, newContent) => {
+  //   setSections(
+  //     sections.map((section, i) => 
+  //       i === index ? { ...section, content: newContent } : section
+  //     )
+  //   );
+  // };
   
-  const handleRemoveSection = (index) => {
-    setSections(sections.filter((_, i) => i !== index));
-  };
+  // const handleRemoveSection = (index) => {
+  //   setSections(sections.filter((_, i) => i !== index));
+  // };
+
+    // Handlers generales para añadir, editar y eliminar secciones
+   
+    const handleAdd = (setFunc, array) => setFunc([...array, { content: '' }]);
+
+    const handleChange = (index, newContent, setFunc, array) => {
+      setFunc(array.map((item, i) => (i === index ? { ...item, content: newContent } : item)));
+    };
+  
+    const handleRemove = (index, setFunc, array) => {
+      setFunc(array.filter((_, i) => i !== index));
+    };
 
   useEffect(() => {
     if (id) {
@@ -40,6 +55,8 @@ export default function AdminInterface() {
           setUserPrompt(data.userPrompt);
           setContext(data.context);
           setSections(data.sections.map((content) => ({ content })));
+          setHeaderPoints(data.headerPoints.map((content) => ({ content })));
+          setFooterPoints(data.footerPoints.map((content) => ({ content })));
         })
         .catch((err) => console.error('Error al cargar datos:', err));
     }
@@ -53,6 +70,8 @@ export default function AdminInterface() {
       userPrompt,
       context,
       sections: sections.map((section) => section.content),
+      headerPoints: headerPoints.map((point) => point.content),
+      footerPoints: footerPoints.map((point) => point.content),
     };
 
     try {
@@ -78,9 +97,48 @@ export default function AdminInterface() {
     }
   };
 
+  const renderSection = (title, points, setPoints) => (
+    <div>
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+      {points.map((point, index) => (
+        <div key={index} className="flex items-start space-x-2 mt-4">
+          <textarea
+            value={point.content}
+            onChange={(e) => handleChange(index, e.target.value, setPoints, points)}
+            className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            rows="3"
+            placeholder={`Punto ${index + 1}`}
+          />
+          <button
+            type="button"
+            onClick={() => handleRemove(index, setPoints, points)}
+            className="text-red-600 hover:text-red-800 focus:outline-none"
+          >
+            <FaTrash /> {/* Icono de eliminación */}
+          </button>
+        </div>
+      ))}
+      <div className="flex justify-center mt-6">
+        <button
+          type="button"
+          onClick={() => handleAdd(setPoints, points)}
+          className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+
 
   return (
     <div className="p-10 pr-20 pl-20 bg-gray-100 min-h-screen">
+       <Link 
+            to="/main-menu" 
+            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
+          >
+            <Home className="w-7 h-7" />
+      </Link>
       <h1 className="text-3xl font-bold mb-4">Generador de Documentos Administrativos</h1>
       <p className="mb-8 text-lg text-gray-700">¡Bienvenido! Personaliza los datos para generar informes y documentos específicos.</p>
       {/* instrucciones */}
@@ -157,39 +215,17 @@ export default function AdminInterface() {
             required
           />
         </div> 
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Puntos del Documento</h3>
-          {sections.map((section, index) => (
-            <div key={index} className="flex items-start space-x-2 mt-4">
-              <textarea
-                value={section.content}
-                onChange={(e) => handleSectionChange(index, e.target.value)}
-                className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                rows="3"
-                placeholder={`Punto ${index + 1}`}
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveSection(index)}
-                className="text-red-600 hover:text-red-800 focus:outline-none"
-              >
-                <FaTrash /> {/* Icono de eliminación */}
-              </button>
-            </div>
-          ))}
-          <div className="flex justify-center mt-6">
-            <button
-              type="button"
-              onClick={handleAddSection}
-              className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              +
-            </button>
-          </div>
-        </div>
+
+        {/* Puntos del Documento */}
+        {renderSection('Puntos del Documento', sections, setSections)}
+
+        {/* Puntos del Encabezado */}
+        {renderSection('Puntos del Encabezado (Opcional)', headerPoints, setHeaderPoints)}
+
+        {/* Puntos del Pie de Página */}
+        {renderSection('Puntos del Pie de Página (Opcional)', footerPoints, setFooterPoints)}
 
         
-
         <div className="mt-8">
           <button
             type="submit"

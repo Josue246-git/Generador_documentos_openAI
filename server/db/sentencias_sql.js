@@ -16,13 +16,13 @@ export async function validarUsuario(cedula, password) {
 
 
 // const insertarDocumento = async (titulo, prompt_user, contexto_base, puntos) => {
-export async function insertarDocumento(titulo, descripcion, prompt_user, contexto_base, puntos) {
+export async function insertarDocumento(titulo, descripcion, prompt_user, contexto_base, puntos, encabezado, piepagina) {
   const query = `
-    INSERT INTO estr_documentos (titulo, descripcion, prompt_user, contexto_base, puntos)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO estr_documentos (titulo, descripcion, prompt_user, contexto_base, puntos, encabezado, piepagina)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING id
   `;
-  const values = [titulo, descripcion, prompt_user, contexto_base, puntos];
+  const values = [titulo, descripcion, prompt_user, contexto_base, puntos, encabezado, piepagina];
   const result = await pool.query(query, values);
   return result.rows[0].id;
 };
@@ -30,7 +30,7 @@ export async function insertarDocumento(titulo, descripcion, prompt_user, contex
 export async function obtenerDocumentos() {
   try {
     const query = `
-      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos, fecha_creacion
+      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos, encabezado, piepagina, fecha_creacion
       FROM estr_documentos
       ORDER BY fecha_creacion DESC
     `; 
@@ -45,7 +45,7 @@ export async function obtenerDocumentos() {
 export async function obtenerDocumentoPorId(documentoId) {
   try {
     const query = `
-      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos
+      SELECT id, titulo, descripcion, prompt_user, contexto_base, puntos, encabezado, piepagina, fecha_creacion
       FROM estr_documentos
       WHERE id = $1
     `;
@@ -61,14 +61,14 @@ export async function obtenerDocumentoPorId(documentoId) {
 
 
 
-export  async function actualizarDocumento(documentoId, titulo, descripcion, prompt_user, contexto_base, puntos) {
+export  async function actualizarDocumento(documentoId, titulo, descripcion, prompt_user, contexto_base, puntos, encabezado, piepagina) {
   try {
     const query = `
       UPDATE estr_documentos
-      SET titulo = $2, descripcion = $3, prompt_user = $4, contexto_base = $5, puntos = $6
+      SET titulo = $2, descripcion = $3, prompt_user = $4, contexto_base = $5, puntos = $6, encabezado = $7, piepagina = $8
       WHERE id = $1
     `;
-    await pool.query(query, [documentoId, titulo, descripcion, prompt_user, contexto_base, puntos]);
+    await pool.query(query, [documentoId, titulo, descripcion, prompt_user, contexto_base, puntos, encabezado, piepagina]);
   } catch (error) {
     console.error('Error al actualizar documento:', error);
     throw error;

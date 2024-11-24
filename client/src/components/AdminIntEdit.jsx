@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
+import {  Home } from "lucide-react"; // Añadido el ícono Home
 
 
 export default function EditAdminInterface() {
@@ -10,6 +11,8 @@ export default function EditAdminInterface() {
   const [userPrompt, setUserPrompt] = useState('');
   const [context, setContext] = useState('');
   const [sections, setSections] = useState([{ content: '' }]);
+  const [headerFields, setHeaderFields] = useState(['']);
+  const [footerFields, setFooterFields] = useState(['']);
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
@@ -29,6 +32,14 @@ export default function EditAdminInterface() {
     setSections(sections.filter((_, i) => i !== index));
   };
 
+  const handleHeaderChange = (index, newContent) => {
+    setHeaderFields(headerFields.map((field, i) => (i === index ? newContent : field)));
+  };
+
+  const handleFooterChange = (index, newContent) => {
+    setFooterFields(footerFields.map((field, i) => (i === index ? newContent : field)));
+  };
+
 
   useEffect(() => {
     // Cargar datos del documento existente
@@ -46,7 +57,10 @@ export default function EditAdminInterface() {
                 ? data.documento.puntos.map((content) => ({ content })) 
                 : [{ content: '' }]
             );
-          } else {
+            setHeaderFields(data.documento.encabezado || ['']);
+            setFooterFields(data.documento.pie_pagina || ['']);
+          } 
+          else {
             console.error('Datos inválidos:', data);
           }
         })
@@ -63,6 +77,8 @@ export default function EditAdminInterface() {
       userPrompt,
       context,
       sections: sections.map((section) => section.content),
+      encabezado: headerFields,
+      pie_pagina: footerFields,
     };
 
     try {
@@ -90,6 +106,12 @@ export default function EditAdminInterface() {
 
   return (
     <div className="p-10 pr-20 pl-20 bg-gray-100 min-h-screen">
+              <Link 
+            to="/main-menu" 
+            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
+          >
+            <Home className="w-7 h-7" />
+          </Link>
       <h1 className="text-3xl font-bold mb-4">Editar Documento Administrativo</h1>
       <p className="mb-8 text-lg text-gray-700">Modifica los datos de este documento existente según sea necesario.</p>
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -171,6 +193,46 @@ export default function EditAdminInterface() {
             </button>
           </div>
         </div>
+        {/* Campos de Encabezado */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Encabezado</h3>
+          {headerFields.map((field, index) => (
+            <div key={index} className="flex items-start space-x-2 mt-4">
+              <textarea
+                value={field}
+                onChange={(e) => handleHeaderChange(index, e.target.value)}
+                className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                rows="2"
+                placeholder={`Encabezado ${index + 1}`}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Campos de Pie de Página */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Pie de Página</h3>
+          {footerFields.map((field, index) => (
+            <div key={index} className="flex items-start space-x-2 mt-4">
+              <textarea
+                value={field}
+                onChange={(e) => handleFooterChange(index, e.target.value)}
+                className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                rows="2"
+                placeholder={`Pie de página ${index + 1}`}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Mensaje de Notificación */}
+        {/* {notification && (
+          <div
+            className={`p-4 rounded-lg ${notification.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+          >
+            {notification.message}
+          </div>
+        )} */}
 
         <div className="mt-8">
           <button
