@@ -52,6 +52,9 @@ export default function MainMenu() {
     navigate('/generate', { state: { document: doc } });
   };
 
+  const handleUsersManagement = () => {
+    navigate('/admin/users');
+  };
 
 const handleDelete = async (documentId) => {
     try {
@@ -94,6 +97,13 @@ const handleDelete = async (documentId) => {
               className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-500 focus:outline-none"
             >
               + Nuevo Documento
+            </button>
+
+            <button
+              onClick={handleUsersManagement}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-500 focus:outline-none"
+            >
+              Gestionar usuarios
             </button>
 
            </div>

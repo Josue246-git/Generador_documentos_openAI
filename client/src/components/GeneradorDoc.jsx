@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, Link } from 'react-router-dom';
 import { Document, Paragraph, Table, TableRow, TableCell, HeadingLevel, Packer } from 'docx';
 import { Loader2, Home } from "lucide-react"; // Añadido el ícono Home
@@ -16,6 +16,8 @@ export default function DocumentGenerator() {
   const [correctionHistory, setCorrectionHistory] = useState({});// Nuevo estado para manejar el historial de correcciones
   const [headerFields, setHeaderFields] = useState([]);
   const [footerFields, setFooterFields] = useState([]);
+  const [headerInputs, setHeaderInputs] = useState({});
+  const [footerInputs, setFooterInputs] = useState({});
 
   function processJSONData(data) {
     // Asegurarse de que los datos son un objeto
@@ -110,6 +112,33 @@ export default function DocumentGenerator() {
     });
   };
 
+  //Cargar datos de encaabezado y pie de pagina
+  useEffect(() => {
+    console.log('Id del documento:', document.id);  
+    if (!document.id) return;
+    fetch(`http://localhost:3000/api/documentos/${document.id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Datos de encabezado y pie de página:', data.documento.encabezado, data.documento.piepagina);
+        setHeaderFields(data.documento.encabezado || []);
+        setFooterFields(data.documento.piepagina || []);
+      })
+      .catch((error) => {
+        console.error('Error al cargar datos de encabezado y pie de página:', error);
+      }
+    );
+  }, [document.id]); 
+
+  // Manejar cambios en inputs del encabezado
+  const handleHeaderInputChange = (field, value) => {
+    setHeaderInputs((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Manejar cambios en inputs del pie de página
+  const handleFooterInputChange = (field, value) => {
+    setFooterInputs((prev) => ({ ...prev, [field]: value }));
+  };
+
 
 // generar el informe
   const handleGenerateReport = async (e) => {
@@ -121,7 +150,7 @@ export default function DocumentGenerator() {
 
     try {
       const response = await fetch('http://localhost:3000/api/generateDoc', {
-        method: 'POST',
+        method: 'POST', 
         headers: {
           'Content-Type': 'application/json',
         },
@@ -136,8 +165,29 @@ export default function DocumentGenerator() {
       // const processedPoints = processJSONData(simalaData);
       console.log('processedPoints:', processedPoints);
       setPoints(processedPoints);
-      setHeaderFields(parsedResponse.header || []);
-      setFooterFields(parsedResponse.footer || []);
+      
+      // CAMBIO IMPORTANTE: Mantener los valores actuales de los inputs
+      const currentHeaderFields = parsedResponse.header || headerFields;
+      const currentFooterFields = parsedResponse.footer || footerFields;
+      
+      setHeaderFields(currentHeaderFields);
+      setFooterFields(currentFooterFields);
+
+      // Preservar los valores actuales de los inputs
+      const preservedHeaderInputs = {};
+      const preservedFooterInputs = {};
+
+      currentHeaderFields.forEach(field => {
+        preservedHeaderInputs[field] = headerInputs[field] || '';
+      });
+
+      currentFooterFields.forEach(field => {
+        preservedFooterInputs[field] = footerInputs[field] || '';
+      });
+
+      setHeaderInputs(preservedHeaderInputs);
+      setFooterInputs(preservedFooterInputs);
+
     } 
     catch (error) {
       console.error('Error generating report:', error);
@@ -194,7 +244,6 @@ export default function DocumentGenerator() {
 
 // Generar el documento de Word
 
-
 const handleGenerateWordDocument = async () => {
   setIsGeneratingWord(true);
 
@@ -212,14 +261,24 @@ const handleGenerateWordDocument = async () => {
 
     const sections = [];
 
-    // Generar encabezado
+    // Generar encabezado con los inputs del usuario
     headerFields.forEach((headerField, index) => {
-      sections.push(
-        new Paragraph({
-          text: headerField || '',
-          heading: HeadingLevel.HEADING_1,
-        })
-      );
+      const headerValue = headerInputs[headerField] || '';
+      if (headerValue.trim()) {
+        // Añadir el nombre del campo como título
+        sections.push(
+          new Paragraph({
+            text: headerField,
+            heading: HeadingLevel.HEADING_2,
+          })
+        );
+        // Añadir el valor del input
+        sections.push(
+          new Paragraph({
+            text: headerValue,
+          })
+        );
+      }
     });
 
     // Generar puntos
@@ -265,14 +324,24 @@ const handleGenerateWordDocument = async () => {
       }
     });
 
-    // Generar pie de página
+    // Generar pie de página con los inputs del usuario
     footerFields.forEach((footerField, index) => {
-      sections.push(
-        new Paragraph({
-          text: footerField || '',
-          heading: HeadingLevel.HEADING_3,
-        })
-      );
+      const footerValue = footerInputs[footerField] || '';
+      if (footerValue.trim()) {
+        // Añadir el nombre del campo como título
+        sections.push(
+          new Paragraph({
+            text: footerField,
+            heading: HeadingLevel.HEADING_2,
+          })
+        );
+        // Añadir el valor del input
+        sections.push(
+          new Paragraph({
+            text: footerValue,
+          })
+        );
+      }
     });
 
     doc.addSection({
@@ -285,7 +354,7 @@ const handleGenerateWordDocument = async () => {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
     });
     
-    const link = window.document.createElement("a");
+    const link = window.document.createElement("a"); 
     link.href = URL.createObjectURL(docBlob);
     link.download = "documento_generado.docx";
     link.click();
@@ -346,7 +415,7 @@ return (
     </form>
 
     <div className="output space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Resultados</h3>
+      <h3 className="text-lg font-semibold text-gray-900">Resultados de Puntos Generados:</h3>
       
       {points.map((point, pointIndex) => (
         <div key={pointIndex} className="bg-white p-4 rounded-md shadow-md space-y-4 border border-gray-300">
@@ -440,33 +509,61 @@ return (
     </div>
     
 {/* Sección de Encabezado */}
-<div className="bg-white p-4 rounded-md shadow-md space-y-4">
-            <h4 className="text-xl font-bold text-gray-700">Encabezado</h4>
-            {headerFields.map((headerField, index) => (
+      <div  className="bg-white p-4 rounded-md shadow-md space-y-4 border border-gray-300">
+        
+      <div className="mb-8 mt-4"> 
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Encabezado</h2>
+          <p className="text-gray-600 mb-4">
+            Por favor, complete los siguientes campos para el encabezado del documento.
+          </p>
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+          {headerFields.map((field, index) => (
+            <div key={index} className="flex flex-col">
+              <label
+                htmlFor={`header-${field}`}
+                className="mb-2 text-sm font-medium text-gray-700"
+              >
+                {field}
+              </label>
               <textarea
-                key={index}
-                className="w-full p-2 border rounded-md"
-                rows="3"
-                value={headerField}
-                onChange={(e) => handleUserInputChange(`header${index}`, e.target.value)}
+                    id={`header-${field}`}
+                    value={headerInputs[field] || ""}
+                    onChange={(e) => handleHeaderInputChange(field, e.target.value)}
+                    className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[50px]"
+                    rows="1"
               />
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
           {/* Sección de Pie de Página */}
-          <div className="bg-white p-4 rounded-md shadow-md space-y-4">
-            <h4 className="text-xl font-bold text-gray-700">Pie de Página</h4>
-            {footerFields.map((footerField, index) => (
+        <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-700 mb-4">Pie de Página</h2>
+        <p className="text-gray-600 mb-4">
+          Por favor, complete los siguientes campos para el pie de página del documento.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+          {footerFields.map((field, index) => (
+            <div key={index} className="flex flex-col">
+              <label
+                htmlFor={`footer-${field}`}
+                className="mb-2 text-sm font-medium text-gray-700"
+              >
+                {field}
+              </label>
               <textarea
-                key={index}
-                className="w-full p-2 border rounded-md"
-                rows="3"
-                value={footerField}
-                onChange={(e) => handleUserInputChange(`footer${index}`, e.target.value)}
+                    id={`footer-${field}`}
+                    value={footerInputs[field] || ""}
+                    onChange={(e) => handleFooterInputChange(field, e.target.value)}
+                    className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[50px]"
+                    rows="1"
               />
-            ))}
-          </div>
-
+            </div>
+          ))}
+        </div>
+      </div>
+      </div>
     <button
       onClick={handleGenerateWordDocument}
       disabled={isGeneratingWord || points.length === 0}

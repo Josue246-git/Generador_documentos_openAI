@@ -8,6 +8,7 @@ import MainMenu from './components/mainMenu';
 import DocumentGenerator from './components/GeneradorDoc';
 import ProtectedRoute from './components/ProtectedRoute';
 import EditarEstrDocumento from './components/AdminIntEdit';
+import UserManagement from './components/usersUI';
 
 function App() {
   const [rol, setRol] = useState('');
@@ -31,6 +32,15 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminInterface />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              <UserManagement />
             </ProtectedRoute>
           }
         />

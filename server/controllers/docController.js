@@ -3,9 +3,10 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import pool from '../db/conexion_db.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { insertarDocumento, obtenerDocumentos, obtenerDocumentoPorId, actualizarDocumento, eliminarDocumento } from '../db/sentencias_sql.js';
+import { insertarDocumento, obtenerDocumentos, obtenerDocumentoPorId, actualizarDocumento, eliminarDocumento, ObtenerUsers, CrearUser, ActualizarUsers, EliminarUsers  } from '../db/sentencias_sql.js';
 
 dotenv.config();
 
@@ -278,5 +279,68 @@ export const deleteEstDocument = async (req, res) => {
   catch (error) {
     console.error('Error al eliminar documento:', error);
     res.status(500).json({ success: false, message: 'Error al eliminar documento' });
+  }
+}
+
+
+
+//Gestion users
+
+export const ObtenerUsuarios = async (req, res) => {
+  try {
+    const users = await ObtenerUsers();
+    // Usar MD5 para desencriptar la contraseña
+
+    console.log('Userios obtenidos');
+    res.json(users);
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error);
+    res.status(500).json({ message: 'Error al obtener usuarios' });
+  }
+};
+
+export const InsertarUsuarios = async (req, res) => {
+  const { cedula, nombre, apellido, email, password, rol} = req.body;
+  try {
+    // Usar MD5 para encriptar la contraseña
+    const hashedPassword = crypto.createHash('md5').update(password).digest('hex'); 
+    console.log('Contraseña original:', password );
+    console.log('Contraseña hasheada:', hashedPassword);
+    
+    // Llamar a la función para crear el usuario con la contraseña hasheada
+    const userid = await CrearUser(cedula, email, hashedPassword, rol, nombre, apellido);
+    console.log('Usuario creado con id:', userid);
+    res.json({ userid });
+  } catch (error) {
+    console.error('Error al crear usuario:', error);
+    res.status(500).json({ message: 'Error al crear usuario' });
+  }
+};
+
+
+
+export const ActualizarUsuarios = async (req, res) => {
+  const { id } = req.params;
+  const { cedula, email,  rol, nombre, apellido } = req.body;
+  try {
+    await ActualizarUsers(id, cedula, email, rol, nombre, apellido);
+    console.log('Usuario actualizado, id:', id);
+    res.json({ message: 'Usuario actualizado' });
+   }
+  catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    res.status(500).json({ message: 'Error al actualizar usuario' });
+  }
+}
+
+export const EliminarUsuarios = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await EliminarUsers(id);
+    console.log('Usuario eliminado, id:', id);
+    res.json({ message: 'Usuario eliminado' });
+  } catch (error) {
+    console.error('Error al eliminar usuario:', error);
+    res.status(500).json({ message: 'Error al eliminar usuario' });
   }
 }

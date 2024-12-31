@@ -1,12 +1,20 @@
 // sentencias_sql.js
 import pool from './conexion_db.js';
 
+import crypto from 'crypto'; // Para Node.js, `crypto` es un módulo nativo
+
 export async function validarUsuario(cedula, password) {
   try {
+    // Encripta la contraseña con MD5
+    const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+
+    // Realiza la consulta para verificar el usuario y la contraseña
     const result = await pool.query(
       'SELECT rol FROM users WHERE cedula = $1 AND password = $2',
-      [cedula, password]
+      [cedula, hashedPassword]
     );
+
+    // Devuelve el rol si la consulta tiene resultados, o null si no se encuentra
     return result.rows.length > 0 ? result.rows[0].rol : null;
   } catch (error) {
     console.error('Error al validar usuario:', error);
@@ -85,3 +93,63 @@ export async function eliminarDocumento(documentoId) {
     throw error;
   }
 }
+
+
+export async function ObtenerUsers() {
+  try {
+    const query = `
+      SELECT id, cedula, nombre, apellido, rol, email 
+      FROM users
+    `;
+    const result
+    = await pool.query(query);
+    return result.rows;
+  }
+  catch (error) {
+    console.error('Error al obtener usuarios:', error);
+    throw error;
+  }
+}
+
+export async function CrearUser(cedula, email, password, rol, nombre, apellido) {
+  try {
+    const query = `
+      INSERT INTO users (cedula, email, password, rol, nombre, apellido)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id
+    `;
+    const values = [cedula, email, password, rol, nombre, apellido];
+    const result = await pool.query(query, values);
+    return result.rows[0].id;
+  } catch (error) {
+    console.error('Error al crear usuario:', error);
+    throw error;
+  }
+}
+
+
+export async function ActualizarUsers(userId, cedula, email, rol, nombre, apellido) {
+  try {
+    const query = `
+      UPDATE users
+      SET cedula = $2, email = $3, rol = $4, nombre = $5, apellido = $6
+      WHERE id = $1
+    `;
+    await pool.query(query, [userId, cedula, email, rol, nombre, apellido]);
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    throw error;
+  }
+}
+
+export async function EliminarUsers(userId) {
+  try {
+    const query = 'DELETE from users WHERE id = $1';
+    await pool.query(query, [userId]);
+  } 
+  catch (error) {
+    console.error('Error al eliminar usuario:', error);
+    throw error;
+  }
+}
+

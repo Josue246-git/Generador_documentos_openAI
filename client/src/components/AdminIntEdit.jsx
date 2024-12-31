@@ -11,8 +11,8 @@ export default function EditAdminInterface() {
   const [userPrompt, setUserPrompt] = useState('');
   const [context, setContext] = useState('');
   const [sections, setSections] = useState([{ content: '' }]);
-  const [headerFields, setHeaderFields] = useState(['']);
-  const [footerFields, setFooterFields] = useState(['']);
+  const [headerFields, setHeaderFields] = useState([{ content: '' }]);
+  const [footerFields, setFooterFields] = useState([{ content: '' }]);
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
@@ -57,14 +57,27 @@ export default function EditAdminInterface() {
                 ? data.documento.puntos.map((content) => ({ content })) 
                 : [{ content: '' }]
             );
-            setHeaderFields(data.documento.encabezado || ['']);
-            setFooterFields(data.documento.pie_pagina || ['']);
+            setHeaderFields( 
+              Array.isArray(data.documento.encabezado) 
+            ? data.documento.encabezado.map((content) => ({ content })) 
+            : [{ content: '' }]
+          );
+
+            setFooterFields(
+              Array.isArray(data.documento.piepagina) 
+              ? data.documento.piepagina.map((content) => ({ content })) 
+              : [{ content: '' }]
+            );
           } 
           else {
             console.error('Datos inválidos:', data);
+            setNotification({ type: 'error', message: 'Error al cargar los datos del documento.' });
           }
         })
-        .catch((err) => console.error('Error al cargar datos:', err));
+        .catch((err) => {
+          console.error('Error al cargar datos:', err);
+          setNotification({ type: 'error', message: 'Error de conexión al cargar los datos.' });
+        });
     }
   }, [id]);
   
@@ -77,8 +90,8 @@ export default function EditAdminInterface() {
       userPrompt,
       context,
       sections: sections.map((section) => section.content),
-      encabezado: headerFields,
-      pie_pagina: footerFields,
+      encabezado:headerFields.map((point) => point.content),
+      pie_pagina: footerFields.map((point) => point.content),
     };
 
     try {
@@ -195,53 +208,72 @@ export default function EditAdminInterface() {
         </div>
         {/* Campos de Encabezado */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Encabezado</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Encabezados del Documento</h3>
           {headerFields.map((field, index) => (
             <div key={index} className="flex items-start space-x-2 mt-4">
               <textarea
-                value={field}
-                onChange={(e) => handleHeaderChange(index, e.target.value)}
+                value={field.content}
+                onChange={(e) => handleHeaderChange(index, { content: e.target.value })}
                 className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 rows="2"
                 placeholder={`Encabezado ${index + 1}`}
               />
+              <button
+                type="button"
+                onClick={() => setHeaderFields(headerFields.filter((_, i) => i !== index))}
+                className="text-red-600 hover:text-red-800 focus:outline-none"
+              >
+                <FaTrash />
+              </button>
             </div>
           ))}
+          <div className="flex justify-center mt-6">
+            <button
+              type="button"
+              onClick={() => setHeaderFields([...headerFields, { content: '' }])}
+              className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              +
+            </button>
+          </div>
         </div>
 
-        {/* Campos de Pie de Página */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Pie de Página</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Pies de Página del Documento</h3>
           {footerFields.map((field, index) => (
             <div key={index} className="flex items-start space-x-2 mt-4">
               <textarea
-                value={field}
-                onChange={(e) => handleFooterChange(index, e.target.value)}
+                value={field.content}
+                onChange={(e) => handleFooterChange(index, { content: e.target.value })}
                 className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 rows="2"
                 placeholder={`Pie de página ${index + 1}`}
               />
+              <button
+                type="button"
+                onClick={() => setFooterFields(footerFields.filter((_, i) => i !== index))}
+                className="text-red-600 hover:text-red-800 focus:outline-none"
+              >
+                <FaTrash />
+              </button>
             </div>
           ))}
-        </div>
-
-        {/* Mensaje de Notificación */}
-        {/* {notification && (
-          <div
-            className={`p-4 rounded-lg ${notification.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-          >
-            {notification.message}
+          <div className="flex justify-center mt-6">
+            <button
+              type="button"
+              onClick={() => setFooterFields([...footerFields, { content: '' }])}
+              className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              +
+            </button>
           </div>
-        )} */}
-
-        <div className="mt-8">
-          <button
-            type="submit"
-            className="w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Guardar Cambios
-          </button>
+          
         </div>
+        <button
+          type="submit"
+          className="mt-6 w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+          Guardar Cambios
+        </button>
       </form>
     </div>
   );
