@@ -18,7 +18,7 @@ const openai = new OpenAI({
 export const generarEstDocumento = async (req, res) => {
   const { title, descripcion, userPrompt, context, sections,headerPoints, footerPoints } = req.body;
 
-  console.log( title, userPrompt, context, sections, headerPoints, footerPoints);
+  // console.log( title, userPrompt, context, sections, headerPoints, footerPoints);
   try {
     // Almacenar los datos en la base de datos
     const documentId = await insertarDocumento(title, descripcion, userPrompt, context, sections, headerPoints, footerPoints);
@@ -106,7 +106,7 @@ export const generarDocumento = async (req, res) => {
         contextMessage,
         { role: 'user', content: userPrompt }
       ],
-      max_tokens: 3000,
+      max_tokens: 5000,
       temperature: 0.2,
       frequency_penalty: 0,
       presence_penalty: 0,
@@ -196,9 +196,9 @@ export const corregirDocumento = async (req, res) => {
   try {
     const { documentoId, titulo, contenido, solicitud } = req.body; // Datos recibidos del frontend
     console.log('documentId:', documentoId);
-    console.log('titulo:', titulo);
-    console.log('contenido:', contenido);
-    console.log('solicitud:', solicitud);
+    // console.log('titulo:', titulo);
+    // console.log('contenido:', contenido);
+    // console.log('solicitud:', solicitud);
 
     // Obtener el documento de la base de datos según el ID
     const documento = await obtenerDocumentoPorId(documentoId);
@@ -247,14 +247,14 @@ export const updateEstDocument = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, descripcion, userPrompt, context, sections,encabezado,pie_pagina } = req.body;
-    console.log('id:', id);
-    console.log('titulo:', title);
-    console.log('descripcion:', descripcion);
-    console.log('prompt_user:', userPrompt);
-    console.log('contexto_base:', context);
-    console.log('puntos:', sections); 
-    console.log('encabezado:', encabezado);
-    console.log('pie_pagina:', pie_pagina);
+    // console.log('id:', id);
+    // console.log('titulo:', title);
+    // console.log('descripcion:', descripcion);
+    // console.log('prompt_user:', userPrompt);
+    // console.log('contexto_base:', context);
+    // console.log('puntos:', sections); 
+    // console.log('encabezado:', encabezado);
+    // console.log('pie_pagina:', pie_pagina);
 
     await actualizarDocumento(id, title, descripcion, userPrompt, context, sections, encabezado, pie_pagina);
 
@@ -304,8 +304,8 @@ export const InsertarUsuarios = async (req, res) => {
   try {
     // Usar MD5 para encriptar la contraseña
     const hashedPassword = crypto.createHash('md5').update(password).digest('hex'); 
-    console.log('Contraseña original:', password );
-    console.log('Contraseña hasheada:', hashedPassword);
+    // console.log('Contraseña original:', password );
+    // console.log('Contraseña hasheada:', hashedPassword);
     
     // Llamar a la función para crear el usuario con la contraseña hasheada
     const userid = await CrearUser(cedula, email, hashedPassword, rol, nombre, apellido);

@@ -22,7 +22,7 @@ const UserManagementInterface = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/users');
+      const response = await axios.get('http://localhost:5000/api/users');
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -31,7 +31,7 @@ const UserManagementInterface = () => {
 
   const createUser = async () => {
     try {
-      await axios.post('http://localhost:3000/api/users', newUser);
+      await axios.post('http://localhost:5000/api/users', newUser);
       setNewUser({
         cedula: '',
         nombre: '',
@@ -48,7 +48,7 @@ const UserManagementInterface = () => {
 
   const updateUser = async () => {
     try {
-      await axios.put(`http://localhost:3000/api/users/${editingUser.id}`, editingUser);
+      await axios.put(`http://localhost:5000/api/users/${editingUser.id}`, editingUser);
       setEditingUser(null);
       fetchUsers();
     } catch (error) {
@@ -58,7 +58,7 @@ const UserManagementInterface = () => {
 
   const deleteUser = async (userId) => {
     try {
-      await axios.delete(`http://localhost:3000/api/users/${userId}`);
+      await axios.delete(`http://localhost:5000/api/users/${userId}`);
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -79,13 +79,16 @@ const UserManagementInterface = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">GESTIÓN DE USUARIOS</h1>
-        <Link 
-            to="/main-menu" 
-            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
-          >
-            <Home className="w-7 h-7" />
-        </Link>
+        <div className="flex items-center mb-8">
+          <Link 
+              to="/main-menu" 
+              className="p-2 mr-5 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
+            >
+              <Home className="w-7 h-7" />
+          </Link>
+          <h1 className="text-3xl font-bold mb-4">GESTIÓN DE USUARIOS</h1>
+        </div>
+  
       <div className="mb-4">
         <h2 className="text-xl font-bold mb-2">Crear usuario</h2>
         <form
@@ -97,7 +100,7 @@ const UserManagementInterface = () => {
         >
           <div>
             <label htmlFor="cedula" className="block mb-1 font-medium">
-              Cedula
+              Cedula *
             </label>
             <input
               type="text"
@@ -106,11 +109,12 @@ const UserManagementInterface = () => {
               value={newUser.cedula}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <div>
             <label htmlFor="nombre" className="block mb-1 font-medium">
-              Nombre
+              Nombre *
             </label>
             <input
               type="text"
@@ -119,11 +123,12 @@ const UserManagementInterface = () => {
               value={newUser.nombre}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <div>
             <label htmlFor="apellido" className="block mb-1 font-medium">
-              Apellido
+              Apellido *
             </label>
             <input
               type="text"
@@ -132,11 +137,12 @@ const UserManagementInterface = () => {
               value={newUser.apellido}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <div>
             <label htmlFor="password" className="block mb-1 font-medium">
-              Password
+              Password *
             </label>
             <input
               type="password"
@@ -145,11 +151,12 @@ const UserManagementInterface = () => {
               value={newUser.password}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <div>
             <label htmlFor="rol" className="block mb-1 font-medium">
-              Rol
+              Rol *
             </label>
             <select
               id="rol"
@@ -157,6 +164,7 @@ const UserManagementInterface = () => {
               value={newUser.rol}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>
@@ -164,7 +172,7 @@ const UserManagementInterface = () => {
           </div>
           <div>
             <label htmlFor="email" className="block mb-1 font-medium">
-              Email
+              Email *
             </label>
             <input
               type="email"
@@ -173,6 +181,7 @@ const UserManagementInterface = () => {
               value={newUser.email}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <button

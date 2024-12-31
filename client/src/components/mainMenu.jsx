@@ -23,7 +23,7 @@ export default function MainMenu() {
   // Función para obtener los documentos desde el servidor
   const fetchDocuments = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/documentos');
+      const response = await axios.get('http://localhost:5000/api/documentos');
       if (response.data.success) {
         setDocuments(response.data.documentos);
       }
@@ -58,7 +58,7 @@ export default function MainMenu() {
 
 const handleDelete = async (documentId) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/documentos/${documentId}`, {
+      const response = await fetch(`http://localhost:5000/api/documentos/${documentId}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error al eliminar el documento');

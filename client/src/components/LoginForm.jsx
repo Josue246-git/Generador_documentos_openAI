@@ -12,7 +12,7 @@ const LoginForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/api/login', { cedula, password });
+      const response = await axios.post('http://localhost:5000/api/login', { cedula, password });
       const { token, rol } = response.data;
       
       console.log('Rol recibido: ', rol);  // Agrega esto para verificar el valor de "rol"

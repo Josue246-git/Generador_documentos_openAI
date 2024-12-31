@@ -47,7 +47,7 @@ export default function AdminInterface() {
   useEffect(() => {
     if (id) {
       // Si hay un ID, cargar datos del servidor
-      fetch(`http://localhost:3000/api/document/${id}`)
+      fetch(`http://localhost:5000/api/document/${id}`)
         .then((res) => res.json())
         .then((data) => {
           setTitle(data.title);
@@ -75,7 +75,7 @@ export default function AdminInterface() {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/generateEst', {
+      const response = await fetch('http://localhost:5000/api/generateEst', {
         method: 'POST', 
         headers: {
           'Content-Type': 'application/json',
@@ -133,13 +133,17 @@ export default function AdminInterface() {
 
   return (
     <div className="p-10 pr-20 pl-20 bg-gray-100 min-h-screen">
-       <Link 
-            to="/main-menu" 
-            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
+        <div className="flex items-center mb-8">
+          <Link 
+              to="/main-menu" 
+              className="p-2 mr-5 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
           >
-            <Home className="w-7 h-7" />
-      </Link>
-      <h1 className="text-3xl font-bold mb-4">Generador de Documentos Administrativos</h1>
+              <Home className="w-7 h-7" />
+          </Link>
+          <h1 className="text-3xl font-bold text-center">Generador de Documentos Administrativos</h1>
+        </div>
+
+
       <p className="mb-8 text-lg text-gray-700">¡Bienvenido! Personaliza los datos para generar informes y documentos específicos.</p>
       {/* instrucciones */}
       <p className="text-lg font-semibold text-gray-800 mb-4">Instrucciones</p>

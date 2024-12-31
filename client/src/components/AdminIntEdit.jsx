@@ -44,7 +44,7 @@ export default function EditAdminInterface() {
   useEffect(() => {
     // Cargar datos del documento existente
     if (id) {
-      fetch(`http://localhost:3000/api/documentos/${id}`)
+      fetch(`http://localhost:5000/api/documentos/${id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.documento) {
@@ -95,7 +95,7 @@ export default function EditAdminInterface() {
     };
 
     try {
-      const response = await fetch(`http://localhost:3000/api/documentos/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/documentos/${id}`, {
         method: 'PUT', // Método PUT para actualizar
         headers: {
           'Content-Type': 'application/json',
@@ -119,13 +119,16 @@ export default function EditAdminInterface() {
 
   return (
     <div className="p-10 pr-20 pl-20 bg-gray-100 min-h-screen">
-              <Link 
+        <div className="flex items-center mb-8">
+          <Link 
             to="/main-menu" 
-            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
+            className="p-2 mr-5 text-gray-600 hover:text-indigo-600 hover:bg-gray-200 rounded-full transition-colors duration-200 flex items-center gap-2"
           >
             <Home className="w-7 h-7" />
           </Link>
-      <h1 className="text-3xl font-bold mb-4">Editar Documento Administrativo</h1>
+          <h1 className="text-3xl font-bold mb-4">Editar Documento Administrativo</h1>
+        </div>
+
       <p className="mb-8 text-lg text-gray-700">Modifica los datos de este documento existente según sea necesario.</p>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>

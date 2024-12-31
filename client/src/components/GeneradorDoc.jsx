@@ -116,7 +116,7 @@ export default function DocumentGenerator() {
   useEffect(() => {
     console.log('Id del documento:', document.id);  
     if (!document.id) return;
-    fetch(`http://localhost:3000/api/documentos/${document.id}`)
+    fetch(`http://localhost:5000/api/documentos/${document.id}`)
       .then((response) => response.json())
       .then((data) => {
         console.log('Datos de encabezado y pie de página:', data.documento.encabezado, data.documento.piepagina);
@@ -149,7 +149,7 @@ export default function DocumentGenerator() {
     const requestData = { documentoId: documentId, objDoc };
 
     try {
-      const response = await fetch('http://localhost:3000/api/generateDoc', {
+      const response = await fetch('http://localhost:5000/api/generateDoc', {
         method: 'POST', 
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +204,7 @@ export default function DocumentGenerator() {
     setLoadingIndex(index);
   
     try {
-      const response = await fetch("http://localhost:3000/api/correct", {
+      const response = await fetch("http://localhost:5000/api/correct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
