@@ -1,17 +1,18 @@
 Para levantar la aplicación se debe crear dos instancias de consola en donde:
 
 1. Ingresar primero a la carpeta ./client y ejecutar el servidor frontend con npm run dev
-2. En la otra instancia ingresar a la carpeta ./server y ejecutar el servidor frontend con npm start 
+2. En la otra consola ingresar a la carpeta ./server y ejecutar el servidor backend con npm start 
 
-Nota: si no esta instalado los modulos necesarios se deberá ejecutar el comando npm install tanto en la instancia del frontend como del backend y después ejecutarlos con los comandos anteriormente mencionados
+NOTA: si no esta instalado los modulos necesarios se deberá ejecutar el comando npm install tanto en la instancia del frontend como del backend y después ejecutarlos con los comandos anteriormente mencionados
 
 
 TECONOLGIAS USADAS:
 
 FRONTEND:
 - React por medio del empaquetador VITE
-- TailwindCss
-- Html y JavaScript 
+- TailwindCss para los estilos
+- Html
+- JavaScript 
 
 BACKEND:
 -JavaScript
@@ -21,5 +22,5 @@ BD:
 - PostgreSQL
 
 OTROS:
-API de OpenAI, modelo 4o-mini
+API de OpenAI, modelo 4o-mini servicio de chat. 
 
